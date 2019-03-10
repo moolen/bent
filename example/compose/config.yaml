@@ -1,0 +1,78 @@
+# services are a global collection of endpoints
+# these endpoints point to the envoy ingress chain
+services:
+- name: "beta.svc"
+  endpoints:
+  - address: 10.123.0.22
+    port: 4100
+- name: "gamma.svc"
+  endpoints:
+  - address: 10.123.0.24
+    port: 4100
+- name: "delta.svc"
+  endpoints:
+  - address: 10.123.0.26
+    port: 4100
+- name: "epsilon.svc"
+  endpoints:
+  - address: 10.123.0.28
+    port: 4100
+- name: "zeta.svc"
+  endpoints:
+  - address: 10.123.0.30
+    port: 4100
+- name: "eta.svc"
+  endpoints:
+  - address: 10.123.0.32
+    port: 4100
+
+nodes:
+
+  alpha:
+    # alpha node does not expose endpoints
+
+  beta:
+    - name: "beta.svc"
+      annotations:
+        # play with these values and check the jaeger dashboard
+        fault.inject: "1"
+        fault.delay.duration: "150"
+        fault.delay.percent: "10"
+        fault.abort.code: "501"
+        fault.abort.percent: "5"
+      endpoints:
+      - address: 10.123.0.23
+        port: 3000
+
+  gamma:
+    - name: "gamma.svc"
+      annotations:
+        enable-retry: ""
+        num-retries: "4"
+      endpoints:
+      - address: 10.123.0.25
+        port: 3000
+
+  delta:
+    - name: "delta.svc"
+      endpoints:
+      - address: 10.123.0.27
+        port: 3000
+
+  epsilon:
+    - name: "epsilon.svc"
+      endpoints:
+      - address: 10.123.0.29
+        port: 3000
+
+  zeta:
+    - name: "zeta.svc"
+      endpoints:
+      - address: 10.123.0.31
+        port: 3000
+
+  eta:
+    - name: "eta.svc"
+      endpoints:
+      - address: 10.123.0.33
+        port: 3000
