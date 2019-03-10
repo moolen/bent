@@ -18,11 +18,7 @@ type Services []Service
 
 // Endpoint represents a address/port combination
 type Endpoint struct {
-	Address string `yaml:"address"`
-	// FIXME:
-	// Annotations on the endpoint level should be used to control e.g. loadBalancingWeight, loadAssignmentPolicies
-	// use-case: blue-green deployment w/ gradual rollout
-	//           there's some more conceptual work to do fo this use-case
+	Address     string            `yaml:"address"`
 	Annotations map[string]string `yaml:"annotations"`
 	Port        uint32            `yaml:"port"`
 }
@@ -68,4 +64,7 @@ const (
 	AnnotaionFaultAbortPercent = "fault.abort.percent"
 	// AnnotaionFaultAbortCode specify the response status code
 	AnnotaionFaultAbortCode = "fault.abort.code"
+
+	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
+	AnnotaionEndpointWeight = "endpoint.weight"
 )

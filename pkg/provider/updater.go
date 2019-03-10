@@ -71,7 +71,7 @@ func (a Updater) Run() {
 				ClusterName: svc.Name,
 				Endpoints: []endpoint.LocalityLbEndpoints{
 					endpoint.LocalityLbEndpoints{
-						LbEndpoints: createEnvoyEndpoint(svc.Endpoints),
+						LbEndpoints: createEnvoyEndpoint(svc),
 					},
 				},
 			})
@@ -103,7 +103,7 @@ func (a Updater) Run() {
 					ClusterName: fmt.Sprintf("%s_%s", localClusterName, localSvc.Name),
 					Endpoints: []endpoint.LocalityLbEndpoints{
 						endpoint.LocalityLbEndpoints{
-							LbEndpoints: createEnvoyEndpoint(localSvc.Endpoints),
+							LbEndpoints: createEnvoyEndpoint(localSvc),
 						},
 					},
 				})

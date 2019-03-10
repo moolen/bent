@@ -224,6 +224,9 @@ const (
 	// AnnotaionFaultAbortPercent int value, specifies the abort injection percentage
 	AnnotaionFaultAbortPercent = "fault.abort.percent"
 	// AnnotaionFaultAbortCode specify the response status code
-	AnnotaionFaultAbortCode = "fault.abort.code"
+  AnnotaionFaultAbortCode = "fault.abort.code"
+
+  // AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
+	AnnotaionEndpointWeight = "endpoint.weight"
 )
 ```

@@ -122,16 +122,14 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 	}
 
 	// add fault injection
-	// FIXME/TODO: implement annotations
 	if services.hasAnnotation(AnnotaionFaultInject) {
-
 		faultDuration := time.Millisecond * time.Duration(
-			parseIntWithFallback(services.GetAnnotation(AnnotaionFaultDelayDuration), 100))
-		delayPercent := parseIntWithFallback(services.GetAnnotation(AnnotaionFaultDelayPercent), 1)
+			parseIntWithFallback(services.getAnnotation(AnnotaionFaultDelayDuration), 100))
+		delayPercent := parseIntWithFallback(services.getAnnotation(AnnotaionFaultDelayPercent), 1)
 		log.Printf("fault injection delay: %dms/%dpercent", faultDuration, delayPercent)
 
-		abortCode := parseIntWithFallback(services.GetAnnotation(AnnotaionFaultAbortCode), 503)
-		abortPercent := parseIntWithFallback(services.GetAnnotation(AnnotaionFaultAbortPercent), 1)
+		abortCode := parseIntWithFallback(services.getAnnotation(AnnotaionFaultAbortCode), 503)
+		abortPercent := parseIntWithFallback(services.getAnnotation(AnnotaionFaultAbortPercent), 1)
 		log.Printf("fault injection abort. code: %d / %dpercent", abortCode, abortPercent)
 
 		faultInjection := util.MessageToAny(&fault.HTTPFault{

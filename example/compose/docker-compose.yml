@@ -69,6 +69,31 @@ services:
       vpcbr:
         ipv4_address: 10.123.0.23
 
+  # beta "pod"
+  beta.2.envoy:
+    image: moolen/bent-envoy:latest
+    environment:
+      SKIP_META: 1
+      ENVOY_NODE_ID: "beta.2"
+      ENVOY_NODE_CLUSTER: "beta.2"
+      ENVOY_XDS_HOST: "controlplane"
+      JAEGER_AGENT_HOST: "jaeger"
+      JAEGER_AGENT_PORT: "6831"
+    networks:
+      vpcbr:
+        ipv4_address: 10.123.0.122
+  beta.2.fwd:
+    image: moolen/trace-fwd:latest
+    environment:
+      TARGET: "http://gamma.svc/from/beta,http://zeta.svc/from/beta"
+      SERVICE_NAME: "beta2-fwd"
+      JAEGER_AGENT_HOST: "jaeger"
+      JAEGER_AGENT_PORT: "6831"
+      http_proxy: "http://beta.2.envoy:4000"
+    networks:
+      vpcbr:
+        ipv4_address: 10.123.0.123
+
   # gamma "pod"
   gamma.envoy:
     image: moolen/bent-envoy:latest
