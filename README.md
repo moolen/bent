@@ -8,12 +8,12 @@ This is merely a proof of concept, not a production grade implementation.
 
 This implementation is a PoC on how to deploy a envoy-based service mesh on top of `AWS FARGATE`. I know, there's App Mesh, but it's not yet released in all regions (can i haz eu-central plx?) and it's bleeding edge. I wanted to experiment and see how to build a service mesh on my own (see limitations below).
 
-For my own sanity aswell as my wallet, this thingy also runs locally leveraging docker-compose. See `Playground` below.
+For my own sanity aswell as my wallet, this thingy also runs locally leveraging [docker-compose](https://github.com/moolen/bent/blob/master/example/compose/docker-compose.yml). See `Playground` below.
 
 ## Installation
 
 WIP: provide a terraform setup to bootstrap the AWS infrastructure.
-For now, take a look at the docker-compose setup.
+For now, take a look at the [docker-compose](https://github.com/moolen/bent/blob/master/example/compose/docker-compose.yml) setup.
 
 A lot of features are built into this implementation:
 
