@@ -16,8 +16,8 @@ type Provider struct {
 }
 
 type schema struct {
-	Services []provider.Service
-	Nodes    map[string][]provider.Service `yaml:"nodes"`
+	Clusters      []provider.Cluster            `yaml:"clusters"`
+	LocalClusters map[string][]provider.Cluster `yaml:"local_clusters"`
 }
 
 // NewProvider returns a new file provider
@@ -39,13 +39,13 @@ func readConfig(path string) (*schema, error) {
 	return &cfg, err
 }
 
-// GetServices implements the provider.ServiceProvider interface
-func (p Provider) GetServices() (services []provider.Service, nodes map[string][]provider.Service, err error) {
+// GetClusters implements the provider.ServiceProvider interface
+func (p Provider) GetClusters() (services []provider.Cluster, nodes map[string][]provider.Cluster, err error) {
 	cfg, err := readConfig(p.path)
 	if err != nil {
 		return
 	}
-	log.Debugf("nodes: %#v", cfg.Nodes)
+	log.Debugf("nodes: %#v", cfg.LocalClusters)
 	log.Debugf("services: %#v", services)
-	return cfg.Services, cfg.Nodes, err
+	return cfg.Clusters, cfg.LocalClusters, err
 }

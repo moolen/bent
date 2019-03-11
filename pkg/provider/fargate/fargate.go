@@ -36,12 +36,12 @@ func NewProvider() (*Provider, error) {
 	}, nil
 }
 
-// GetServices returns a list of services running in FARGATE cluster
+// GetClusters returns a list of services running in FARGATE cluster
 // assumptions:
 //   - we DON'T care about the FARGATE service concept
 //   - a container within a task can expose _multiple_ services
-func (p Provider) GetServices() ([]provider.Service, map[string][]provider.Service, error) {
-	nodes := make(map[string][]provider.Service)
+func (p Provider) GetClusters() ([]provider.Cluster, map[string][]provider.Cluster, error) {
+	localClusters := make(map[string][]provider.Cluster)
 	serviceMap := make(map[string][]provider.Endpoint)
 
 	clusters, err := p.listClusters()
@@ -62,7 +62,7 @@ func (p Provider) GetServices() ([]provider.Service, map[string][]provider.Servi
 			for _, task := range tasks {
 				taskdef := serviceTaskDefs[*task.TaskDefinitionArn]
 				// find related endpoints
-				taskServices, err := p.findServices(task, taskdef)
+				taskEndpoints, err := p.findEndpoints(task, taskdef)
 				if err != nil {
 					log.Warnf("error finding endpoints for task %s: %s", *task.TaskArn, err)
 					continue
@@ -73,13 +73,13 @@ func (p Provider) GetServices() ([]provider.Service, map[string][]provider.Servi
 					continue
 				}
 
-				for svc, taskEPs := range taskServices {
-					serviceMap[svc] = append(serviceMap[svc], taskEPs...)
+				for name, endpoints := range taskEndpoints {
+					serviceMap[name] = append(serviceMap[name], endpoints...)
 
-					nodes[nodeID] = append(nodes[nodeID], provider.Service{
-						Name:        svc,
-						Annotations: sumEndpointAnnotations(taskEPs),
-						Endpoints:   taskEPs,
+					localClusters[nodeID] = append(localClusters[nodeID], provider.Cluster{
+						Name:        name,
+						Annotations: sumEndpointAnnotations(endpoints),
+						Endpoints:   endpoints,
 					})
 				}
 			}
@@ -87,18 +87,18 @@ func (p Provider) GetServices() ([]provider.Service, map[string][]provider.Servi
 	}
 
 	// transform map to array
-	providerServices := []provider.Service{}
+	globalClusters := []provider.Cluster{}
 
 	for svc, eps := range serviceMap {
 
-		providerServices = append(providerServices, provider.Service{
+		globalClusters = append(globalClusters, provider.Cluster{
 			Name:        svc,
 			Annotations: sumEndpointAnnotations(eps),
 			Endpoints:   eps,
 		})
 	}
 
-	return providerServices, nodes, nil
+	return globalClusters, localClusters, nil
 }
 
 // TaskArnToNodeID transforms a TaskArn to a node id
@@ -110,22 +110,22 @@ func TaskArnToNodeID(arn string) (string, error) {
 	return parts[1], nil
 }
 
-func (p Provider) findServices(task *ecs.Task, taskdef *ecs.TaskDefinition) (map[string][]provider.Endpoint, error) {
+func (p Provider) findEndpoints(task *ecs.Task, taskdef *ecs.TaskDefinition) (map[string][]provider.Endpoint, error) {
 	services := make(map[string][]provider.Endpoint)
 	log.Infof("finding endpoints for task %#v", *task)
-	targets, err := findTarget(taskdef)
+	taskTargets, err := findTaskTargets(taskdef)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing tags of task %s: %s", *task.TaskDefinitionArn, err)
 	}
-	log.Infof("task targets: %#v", targets)
+	log.Infof("task taskTargets: %#v", taskTargets)
 	for _, container := range task.Containers {
-		if targets[*container.Name] != nil {
-			for _, svc := range targets[*container.Name] {
+		if taskTargets[*container.Name] != nil {
+			for _, target := range taskTargets[*container.Name] {
 				for _, nic := range container.NetworkInterfaces {
-					services[svc.ServiceName] = append(services[svc.ServiceName], provider.Endpoint{
+					services[target.ClusterName] = append(services[target.ClusterName], provider.Endpoint{
 						Address:     *nic.PrivateIpv4Address,
-						Annotations: svc.Annotations,
-						Port:        svc.Port,
+						Annotations: target.Annotations,
+						Port:        target.Port,
 					})
 				}
 			}
@@ -136,13 +136,13 @@ func (p Provider) findServices(task *ecs.Task, taskdef *ecs.TaskDefinition) (map
 }
 
 type taskTarget struct {
-	ServiceName string
+	ClusterName string
 	Annotations map[string]string
 	Port        uint32
 }
 
-// tags should start with service-{svc}
-func findTarget(task *ecs.TaskDefinition) (map[string][]taskTarget, error) {
+// should start with envoy.service-{svc}
+func findTaskTargets(task *ecs.TaskDefinition) (map[string][]taskTarget, error) {
 	targets := make(map[string][]taskTarget)
 	for _, container := range task.ContainerDefinitions {
 		for label, value := range container.DockerLabels {
@@ -150,8 +150,8 @@ func findTarget(task *ecs.TaskDefinition) (map[string][]taskTarget, error) {
 			//        envoy.service.foo.bar.annotations.baz.bang = foo:123
 			//        -> this would create a service foo.bar.annotations.baz.bang
 			//           that points to container "foo" at port "123"
-			serviceName := strings.TrimPrefix(label, "envoy.service.")
-			if label == serviceName {
+			clusterName := strings.TrimPrefix(label, "envoy.service.")
+			if label == clusterName {
 				continue
 			}
 			list := strings.Split(*value, ":")
@@ -163,12 +163,11 @@ func findTarget(task *ecs.TaskDefinition) (map[string][]taskTarget, error) {
 				continue
 			}
 			targets[list[0]] = append(targets[list[0]], taskTarget{
-				ServiceName: serviceName,
+				ClusterName: clusterName,
 				Annotations: stripKeyPrefix(fmt.Sprintf("%s.annotations.", label), container.DockerLabels),
 				Port:        uint32(port),
 			})
 		}
-
 	}
 	return targets, nil
 }

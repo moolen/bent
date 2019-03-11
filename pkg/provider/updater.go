@@ -21,7 +21,8 @@ const (
 	defaultHealthCheckPath    = "/healthz"
 	defaultHealthTimeout      = 3000  // in ms
 	defaultHealthInterval     = 10000 // in ms
-	localClusterName          = "local_cluster"
+
+	localClusterName = "local_cluster"
 
 	egressRoute  = "egress_route"
 	ingressRoute = "ingress_route"
@@ -52,19 +53,19 @@ func (a Updater) Run() {
 		var listeners []cache.Resource
 		var clusters []cache.Resource
 		var routes []cache.Resource
-		var services []Service
+		var globalCluster []Cluster
 		var snap cache.Snapshot
 		var err error
 		var egressVHosts []route.VirtualHost
-		nodes := make(map[string][]Service)
+		localClusters := make(map[string][]Cluster)
 
-		services, nodes, err = a.provider.GetServices()
+		globalCluster, localClusters, err = a.provider.GetClusters()
 		if err != nil {
-			log.Errorf("error fetching services: %s", err)
+			log.Errorf("error fetching globalCluster: %s", err)
 			goto Wait
 		}
 
-		for _, svc := range services {
+		for _, svc := range globalCluster {
 
 			// define egress endpoints
 			endpoints = append(endpoints, &v2.ClusterLoadAssignment{
@@ -90,17 +91,19 @@ func (a Updater) Run() {
 		)
 
 		// each node needs a local configuration that points to the sidecar-ed application
-		for node, localSvcs := range nodes {
+		for node, localCluster := range localClusters {
 
-			for _, localSvc := range localSvcs {
+			for _, localSvc := range localCluster {
 				log.Debugf("adding local config for %s/%s", node, localSvc.Name)
 
 				// add a local cluster
-				clusters = append(clusters, makeCluster(fmt.Sprintf("%s_%s", localClusterName, localSvc.Name), localSvc.Annotations))
+				clusters = append(clusters, makeCluster(fmt.Sprintf("%s_%s",
+					localClusterName, localSvc.Name), localSvc.Annotations))
 
 				// add local endpoints
 				endpoints = append(endpoints, &v2.ClusterLoadAssignment{
-					ClusterName: fmt.Sprintf("%s_%s", localClusterName, localSvc.Name),
+					ClusterName: fmt.Sprintf("%s_%s",
+						localClusterName, localSvc.Name),
 					Endpoints: []endpoint.LocalityLbEndpoints{
 						endpoint.LocalityLbEndpoints{
 							LbEndpoints: createEnvoyEndpoint(localSvc),
@@ -112,11 +115,12 @@ func (a Updater) Run() {
 				routes = append(routes, &v2.RouteConfiguration{
 					Name: ingressRoute,
 					VirtualHosts: []route.VirtualHost{
-						getVirtualHost(localSvc.Name, fmt.Sprintf("%s_%s", localClusterName, localSvc.Name), localSvc.Annotations),
+						getVirtualHost(localSvc.Name, fmt.Sprintf("%s_%s",
+							localClusterName, localSvc.Name), localSvc.Annotations),
 					},
 				})
 			}
-			listeners, err = makeListeners(node, localSvcs)
+			listeners, err = makeListeners(node, localCluster)
 			if err != nil {
 				log.Errorf("error creating listeners: %s", err)
 				goto Wait

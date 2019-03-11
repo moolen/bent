@@ -61,10 +61,10 @@ func getVirtualHost(dns, cluster string, annotations map[string]string) route.Vi
 	return vhost
 }
 
-func createEnvoyEndpoint(service Service) []endpoint.LbEndpoint {
+func createEnvoyEndpoint(cluster Cluster) []endpoint.LbEndpoint {
 	var envoyEndpoints []endpoint.LbEndpoint
-	weight := parseIntWithFallback(service.getAnnotation(AnnotaionEndpointWeight), 64)
-	for _, ep := range service.Endpoints {
+	weight := parseIntWithFallback(cluster.getAnnotation(AnnotaionEndpointWeight), 64)
+	for _, ep := range cluster.Endpoints {
 		envoyEndpoints = append(envoyEndpoints, endpoint.LbEndpoint{
 			LoadBalancingWeight: &types.UInt32Value{Value: uint32(weight)},
 			Metadata:            &core.Metadata{},

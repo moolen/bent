@@ -15,16 +15,6 @@ For my own sanity aswell as my wallet, this thingy also runs locally leveraging 
 WIP: provide a terraform setup to bootstrap the AWS infrastructure.
 For now, take a look at the [docker-compose](https://github.com/moolen/bent/blob/master/example/compose/docker-compose.yml) setup.
 
-A lot of features are built into this implementation:
-
-- configurable health checking
-- configurable circuit breaking
-- configurable retry mechanics
-- json access logs
-- native open tracing integration (jaeger)
-- prometheus endpoint (`0.0.0.0:15090/stats/prometheus`)
-- configurable fault injection
-
 ### Building from source
 
 ```bash
@@ -43,12 +33,24 @@ $ docker-compose up -f ./example/compose/docker-compose.yml
 ```
 Open the jaeger dashboard at [http://localhost:16686](http://localhost:16686) in your browser. There's a traffic-generator built-in.
 
+A lot of features are built into this implementation:
+
+- configurable health checking
+- configurable circuit breaking
+- configurable retry mechanics
+- json access logs
+- native open tracing integration (jaeger)
+- prometheus endpoint (`0.0.0.0:15090/stats/prometheus`)
+- configurable fault injection
+
+Just change the annotations in the `config.yaml`. They are reloaded at runtime.
+
 ## Concepts
 
 Bent makes assumptions about the way services are running and how they interact with each other. These concepts were initially tailored towards services running on `AWS Fargate`.
 
 ### Service Mesh
-All ECS FARGATE services are meshed. All ingress and egress traffic flows through the sidecar.
+All ECS FARGATE **tasks** are meshed. All ingress and egress traffic flows through the sidecar.
 
 Example:
 
@@ -101,7 +103,7 @@ The controlplane depends on the [well-known AWS environment variables](https://d
 
 Bent's abstraction of endpoints and services is a different one than the one AWS Fargate makes.
 
-* bent doesn't care about "services"
+* it doesn't care about "ECS services"
 * all (ecs) tasks are equal
 * a task may expose multiple endpoints
 * tasks use dockerLabels to configure the sidecar

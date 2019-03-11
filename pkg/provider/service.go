@@ -1,6 +1,6 @@
 package provider
 
-func (s Service) getAnnotation(check string) string {
+func (s Cluster) getAnnotation(check string) string {
 	for key, val := range s.Annotations {
 		if key == check {
 			return val
@@ -9,7 +9,7 @@ func (s Service) getAnnotation(check string) string {
 	return ""
 }
 
-func (s Service) hasAnnotation(check string) bool {
+func (s Cluster) hasAnnotation(check string) bool {
 	for key := range s.Annotations {
 		if key == check {
 			return true
@@ -18,7 +18,7 @@ func (s Service) hasAnnotation(check string) bool {
 	return false
 }
 
-func (s Services) hasAnnotation(check string) bool {
+func (s Clusters) haveAnnotation(check string) bool {
 	for _, service := range s {
 		if service.hasAnnotation(check) {
 			return true
@@ -28,7 +28,7 @@ func (s Services) hasAnnotation(check string) bool {
 }
 
 // getAnnotation returns the first annotation value thath matches the key
-func (s Services) getAnnotation(key string) string {
+func (s Clusters) getAnnotation(key string) string {
 	for _, svc := range s {
 		for k, v := range svc.Annotations {
 			if k == key {

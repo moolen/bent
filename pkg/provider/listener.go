@@ -47,12 +47,12 @@ var (
 	}
 )
 
-func makeListeners(node string, services Services) ([]cache.Resource, error) {
-	egressManager, err := makeHTTPManager(egressRoute, hcm.EGRESS, services)
+func makeListeners(node string, clusters Clusters) ([]cache.Resource, error) {
+	egressManager, err := makeHTTPManager(egressRoute, hcm.EGRESS, clusters)
 	if err != nil {
 		return nil, err
 	}
-	ingressManager, err := makeHTTPManager(ingressRoute, hcm.INGRESS, services)
+	ingressManager, err := makeHTTPManager(ingressRoute, hcm.INGRESS, clusters)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func makeListeners(node string, services Services) ([]cache.Resource, error) {
 	}, nil
 }
 
-func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tracing_OperationName, services Services) (*types.Any, error) {
+func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tracing_OperationName, clusters Clusters) (*types.Any, error) {
 	var httpFilters []*hcm.HttpFilter
 
 	logConfig, err := util.MessageToStruct(&accesslog.FileAccessLog{
@@ -122,14 +122,14 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 	}
 
 	// add fault injection
-	if services.hasAnnotation(AnnotaionFaultInject) {
+	if clusters.haveAnnotation(AnnotaionFaultInject) {
 		faultDuration := time.Millisecond * time.Duration(
-			parseIntWithFallback(services.getAnnotation(AnnotaionFaultDelayDuration), 100))
-		delayPercent := parseIntWithFallback(services.getAnnotation(AnnotaionFaultDelayPercent), 1)
+			parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultDelayDuration), 100))
+		delayPercent := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultDelayPercent), 1)
 		log.Printf("fault injection delay: %dms/%dpercent", faultDuration, delayPercent)
 
-		abortCode := parseIntWithFallback(services.getAnnotation(AnnotaionFaultAbortCode), 503)
-		abortPercent := parseIntWithFallback(services.getAnnotation(AnnotaionFaultAbortPercent), 1)
+		abortCode := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultAbortCode), 503)
+		abortPercent := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultAbortPercent), 1)
 		log.Printf("fault injection abort. code: %d / %dpercent", abortCode, abortPercent)
 
 		faultInjection := util.MessageToAny(&fault.HTTPFault{

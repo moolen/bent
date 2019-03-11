@@ -1,20 +1,24 @@
 package provider
 
-// ServiceProvider provides a list of service endpoints
+// ServiceProvider provides a list of endpoints
+// - there are global endpoints for the egress traffic
+// - there are local endpoints for ingress traffic which are specific to a node
 type ServiceProvider interface {
-	// GetServices returns all services and nodes that the provider is aware of
-	GetServices() (services []Service, nodes map[string][]Service, err error)
+	// GetClusters returns:
+	// - all global clusters
+	// - a mapping of node -> []cluster that contains local clusters
+	GetClusters() (global []Cluster, local map[string][]Cluster, err error)
 }
 
-// Service represents a group of endpoints that serve the same application
-type Service struct {
+// Cluster represents a group of endpoints
+type Cluster struct {
 	Name        string            `yaml:"name"`
 	Annotations map[string]string `yaml:"annotations"`
 	Endpoints   []Endpoint        `yaml:"endpoints"`
 }
 
-// Services is a list of services
-type Services []Service
+// Clusters is a list of services
+type Clusters []Cluster
 
 // Endpoint represents a address/port combination
 type Endpoint struct {

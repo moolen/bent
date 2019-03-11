@@ -1,6 +1,6 @@
-# services are a global collection of endpoints
+# clusters are a global collection of endpoints
 # these endpoints point to the envoy ingress chain
-services:
+clusters:
 - name: "beta.svc"
   endpoints:
   - address: 10.123.0.22
@@ -28,7 +28,8 @@ services:
   - address: 10.123.0.32
     port: 4100
 
-nodes:
+# local clusters is a
+local_clusters:
 
   alpha:
     # alpha node does not expose endpoints
