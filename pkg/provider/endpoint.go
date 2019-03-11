@@ -1,89 +1,19 @@
 package provider
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/gogo/protobuf/types"
-	"github.com/moolen/bent/envoy/api/v2/core"
-	"github.com/moolen/bent/envoy/api/v2/endpoint"
-	"github.com/moolen/bent/envoy/api/v2/route"
-	log "github.com/sirupsen/logrus"
-)
-
-func getVirtualHost(dns, cluster string, annotations map[string]string) route.VirtualHost {
-	log.Infof("vhost annotations: %#v", annotations)
-	numRetries := parseIntWithFallback(annotations[AnnotationNumRetries], 3)
-
-	// should be the normal 99th percentile latency
-	retryTimeout := 500 * time.Millisecond
-
-	vhost := route.VirtualHost{
-		Name: fmt.Sprintf("vhost_%s", dns),
-		Domains: []string{
-			dns,
-		},
-		Routes: []route.Route{
-			{
-				Match: route.RouteMatch{
-					PathSpecifier: &route.RouteMatch_Prefix{
-						Prefix: "/",
-					},
-					// FIXME: specify HTTP Method filter defined by annotations
-					// Headers: []*route.HeaderMatcher{
-					// 	{
-					// 		Name: ":method",
-					// 		HeaderMatchSpecifier: &route.HeaderMatcher_ExactMatch{
-					// 			ExactMatch: "GET",
-					// 		},
-					// 	},
-					// },
-				},
-				Action: &route.Route_Route{
-					Route: &route.RouteAction{
-						ClusterSpecifier: &route.RouteAction_Cluster{
-							Cluster: cluster,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	if _, ok := annotations[AnnotationEnableRetry]; ok {
-		vhost.RetryPolicy = &route.RetryPolicy{
-			RetryOn:       "5xx",
-			NumRetries:    &types.UInt32Value{Value: uint32(numRetries)},
-			PerTryTimeout: &retryTimeout,
+func (ep Endpoint) getAnnotation(check string) string {
+	for key, val := range ep.Annotations {
+		if key == check {
+			return val
 		}
 	}
-
-	return vhost
+	return ""
 }
 
-func createEnvoyEndpoint(cluster Cluster) []endpoint.LbEndpoint {
-	var envoyEndpoints []endpoint.LbEndpoint
-	weight := parseIntWithFallback(cluster.getAnnotation(AnnotaionEndpointWeight), 64)
-	for _, ep := range cluster.Endpoints {
-		envoyEndpoints = append(envoyEndpoints, endpoint.LbEndpoint{
-			LoadBalancingWeight: &types.UInt32Value{Value: uint32(weight)},
-			Metadata:            &core.Metadata{},
-			HostIdentifier: &endpoint.LbEndpoint_Endpoint{
-				Endpoint: &endpoint.Endpoint{
-					Address: &core.Address{
-						Address: &core.Address_SocketAddress{
-							SocketAddress: &core.SocketAddress{
-								Protocol: core.TCP,
-								Address:  ep.Address,
-								PortSpecifier: &core.SocketAddress_PortValue{
-									PortValue: ep.Port,
-								},
-							},
-						},
-					},
-				},
-			},
-		})
+func (ep Endpoint) hasAnnotation(check string) bool {
+	for key := range ep.Annotations {
+		if key == check {
+			return true
+		}
 	}
-	return envoyEndpoints
+	return false
 }
