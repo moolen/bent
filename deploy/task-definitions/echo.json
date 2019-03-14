@@ -1,0 +1,62 @@
+[
+    {
+      "name": "envoy",
+      "image": "moolen/bent-envoy:latest",
+      "cpu": 512,
+      "memory": 1024,
+      "environment": [
+        {
+          "name": "ENVOY_XDS_HOST",
+          "value": "${ENVOY_XDS_HOST}"
+        },
+        {
+          "name": "ENVOY_JAEGER_AGENT_HOST",
+          "value": "${ENVOY_JAEGER_AGENT_HOST}"
+        },
+        {
+          "name": "ENVOY_JAEGER_SERVICE_NAME",
+          "value": "${NAME}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fargate/${NAME}-envoy",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "essential": true,
+      "dockerLabels": {}
+    },
+    {
+      "name": "app",
+      "image": "jmalloc/echo-server",
+      "cpu": 512,
+      "memory": 1024,
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "http_proxy",
+          "value": "http://127.0.0.1:4000"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fargate/${NAME}",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "essential": true,
+      "dockerLabels": {
+        "envoy.service.${NAME}": "app:3000"
+      }
+    }
+  ]

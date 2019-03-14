@@ -1,0 +1,25 @@
+[
+    {
+      "name": "bent",
+      "image": "moolen/bent:latest",
+      "cpu": 512,
+      "memory": 1024,
+      "environment": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fargate/bent-controlplane",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+      "portMappings": [
+        {
+          "containerPort": 50000
+        }
+      ],
+      "essential": true,
+      "dockerLabels": {}
+    }
+  ]
