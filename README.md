@@ -1,8 +1,6 @@
 # bent
 
-This repository contains a implementation of an API server that implements the [Envoy xDS discovery service API](https://github.com/envoyproxy/data-plane-api). It is based on the official [envoyproxy/go-control-plane](https://github.com/envoyproxy/go-control-plane) and the aws specifics were taken from [turbinelabs/rotor](https://github.com/turbinelabs/rotor).
-
-This is merely a proof of concept, not a production grade implementation.
+Run a Service Mesh on top of AWS Fargate containers.
 
 ## What's the point?
 
@@ -190,11 +188,9 @@ If you want to specify the health-check path for your `echo.alpha` service, use 
 Here's a list of all Annotations (some of them are untested tho!)
 
 ```go
-const (
-	// AnnotationEnableRetry enables retry functionality
-	AnnotationEnableRetry = "enable-retry"
-	// AnnotationNumRetries controls the retry behavior of a route
-	AnnotationNumRetries = "num-retries"
+// ------
+	// cluster level annotations
+	// ------
 
 	// AnnotationHealthCheckPath specifies the HTTP Path for health-checks
 	AnnotationHealthCheckPath = "healthcheck.path"
@@ -218,6 +214,22 @@ const (
 	// will allow to the upstream cluster
 	AnnotaionCBMaxRetries = "circuit-breaker.max-retries"
 
+	// ------
+	// endpoint level annotations
+	// ------
+
+	// AnnotationEnableRetry enables retry functionality
+	AnnotationEnableRetry = "enable-retry"
+	// AnnotationNumRetries controls the retry behavior of a route
+	AnnotationNumRetries = "num-retries"
+
+	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
+	AnnotaionEndpointWeight = "endpoint.weight"
+
+	// ------
+	// listener level annotations
+	// ------
+
 	// AnnotaionFaultInject enables fault injection
 	AnnotaionFaultInject = "fault.inject"
 	// AnnotaionFaultDelayPercent int value, specifies the delay injection percentage
@@ -228,8 +240,4 @@ const (
 	AnnotaionFaultAbortPercent = "fault.abort.percent"
 	// AnnotaionFaultAbortCode specify the response status code
 	AnnotaionFaultAbortCode = "fault.abort.code"
-
-	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
-	AnnotaionEndpointWeight = "endpoint.weight"
-)
 ```

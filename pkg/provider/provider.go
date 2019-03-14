@@ -30,10 +30,10 @@ type AnnotationProvider interface {
 }
 
 const (
-	// AnnotationEnableRetry enables retry functionality
-	AnnotationEnableRetry = "enable-retry"
-	// AnnotationNumRetries controls the retry behavior of a route
-	AnnotationNumRetries = "num-retries"
+
+	// ------
+	// cluster level annotations
+	// ------
 
 	// AnnotationHealthCheckPath specifies the HTTP Path for health-checks
 	AnnotationHealthCheckPath = "healthcheck.path"
@@ -57,6 +57,22 @@ const (
 	// will allow to the upstream cluster
 	AnnotaionCBMaxRetries = "circuit-breaker.max-retries"
 
+	// ------
+	// endpoint level annotations
+	// ------
+
+	// AnnotationEnableRetry enables retry functionality
+	AnnotationEnableRetry = "enable-retry"
+	// AnnotationNumRetries controls the retry behavior of a route
+	AnnotationNumRetries = "num-retries"
+
+	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
+	AnnotaionEndpointWeight = "endpoint.weight"
+
+	// ------
+	// listener level annotations
+	// ------
+
 	// AnnotaionFaultInject enables fault injection
 	AnnotaionFaultInject = "fault.inject"
 	// AnnotaionFaultDelayPercent int value, specifies the delay injection percentage
@@ -68,6 +84,6 @@ const (
 	// AnnotaionFaultAbortCode specify the response status code
 	AnnotaionFaultAbortCode = "fault.abort.code"
 
-	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
-	AnnotaionEndpointWeight = "endpoint.weight"
+	// TODO: add healthcheck filter
+	// https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/health_check_filter
 )

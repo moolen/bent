@@ -61,3 +61,26 @@ func makeEgressClusters(in []Cluster) (out []Cluster) {
 	}
 	return out
 }
+
+func mergeAnnotations(cluster Cluster) map[string]string {
+	out := make(map[string]string)
+	for k, v := range cluster.Annotations {
+		out[k] = v
+	}
+	for _, ep := range cluster.Endpoints {
+		for k, v := range ep.Annotations {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+func mergeEndpointAnnotations(eps ...Endpoint) map[string]string {
+	out := make(map[string]string)
+	for _, ep := range eps {
+		for k, v := range ep.Annotations {
+			out[k] = v
+		}
+	}
+	return out
+}

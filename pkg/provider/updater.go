@@ -54,7 +54,7 @@ func transform(providerClusters map[string][]Cluster) ([]*Node, error) {
 	for _, clusters := range providerClusters {
 		globalCluster = append(globalCluster, makeEgressClusters(clusters)...)
 		for _, cluster := range clusters {
-			globalVHosts = append(globalVHosts, getVirtualHost(cluster.Name, cluster.Name, cluster.Annotations))
+			globalVHosts = append(globalVHosts, getVirtualHost(cluster.Name, cluster.Name, mergeAnnotations(cluster)))
 		}
 	}
 
@@ -72,7 +72,7 @@ func transform(providerClusters map[string][]Cluster) ([]*Node, error) {
 				Annotations: cluster.Annotations,
 				Endpoints:   cluster.Endpoints,
 			})
-			node.AddVirtualHosts(ingressRoute, getVirtualHost(cluster.Name, localClusterName, cluster.Annotations))
+			node.AddVirtualHosts(ingressRoute, getVirtualHost(cluster.Name, localClusterName, mergeAnnotations(cluster)))
 		}
 
 		listeners, err := makeListeners(Clusters(clusters))
