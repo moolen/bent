@@ -89,7 +89,7 @@
           "socket_address": {
             "protocol": "TCP",
             "address": "127.0.0.1",
-            "port_value": 9999,
+            "port_value": "{{envOrDefault "ENVOY_ADMIN_PORT" "9999"}}",
         }
       }],
     }
@@ -128,7 +128,7 @@
     }
   },
   "admin":{
-    "access_log_path": "{{envOrDefault "ENVOY_ADMIN_LOG" "/dev/stdout"}}",
+    "access_log_path": "/dev/stdout",
     "address": {
       "socket_address": {
         "protocol": "TCP",
@@ -137,7 +137,7 @@
       }
     }
   }
-{{- if envOrDefault "JAEGER_AGENT_HOST" "" }}
+{{- if envOrDefault "ENVOY_JAEGER_AGENT_HOST" "" }}
   ,"tracing":{
     "http": {
       "name": "envoy.dynamic.ot",
@@ -145,13 +145,13 @@
         "@type": "type.googleapis.com/envoy.config.trace.v2.DynamicOtConfig",
         "library": "/usr/local/lib/libjaegertracing_plugin.so",
         "config": {
-          "service_name": "{{envOrDefault "ENVOY_NODE_CLUSTER" "default-cluster"}}",
+          "service_name": "{{envOrDefault "ENVOY_JAEGER_SERVICE_NAME" "default-service"}}",
           "sampler": {
             "type": "const",
             "param": 1
           },
           "reporter": {
-            "localAgentHostPort": "{{envOrDefault "JAEGER_AGENT_HOST" "jaeger"}}:{{envOrDefault "JAEGER_AGENT_PORT" "6831"}}"
+            "localAgentHostPort": "{{envOrDefault "ENVOY_JAEGER_AGENT_HOST" "default.svc"}}:{{envOrDefault "ENVOY_JAEGER_AGENT_PORT" "6831"}}"
           },
           "headers": {
             "jaegerDebugHeader": "jaeger-debug-id",

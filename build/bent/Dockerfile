@@ -9,4 +9,5 @@ RUN make build
 
 FROM alpine:3.9
 COPY --from=builder /go/src/github.com/moolen/bent/bin/bent /bent
+RUN apk add --update ca-certificates
 ENTRYPOINT [ "/bent" ]

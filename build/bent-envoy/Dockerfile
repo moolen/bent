@@ -25,8 +25,8 @@ RUN curl -Lo /usr/local/lib/libjaegertracing_plugin.so \
     https://github.com/jaegertracing/jaeger-client-cpp/releases/download/$JAEGER_VERSION/libjaegertracing_plugin.linux_amd64.so
 
 COPY --from=builder /go/src/github.com/moolen/bent/bin/metadata /usr/local/bin/metadata
-ADD build/envoy/bootstrap.conf.tmpl /etc/envoy/bootstrap.conf.tmpl
-ADD build/envoy/entrypoint.sh /usr/local/bin/entrypoint.sh
+ADD build/bent-envoy/bootstrap.conf.tmpl /etc/envoy/bootstrap.conf.tmpl
+ADD build/bent-envoy/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 CMD ["/sbin/my_init", "--", "/usr/local/bin/entrypoint.sh"]
