@@ -15,6 +15,8 @@ nodes:
       endpoints:
       - address: 10.123.0.21
         port: 3000
+        annotations:
+          endpoint.weight: 100
 
   beta.2:
     - name: "beta.svc"
@@ -27,6 +29,8 @@ nodes:
       endpoints:
       - address: 10.123.0.22
         port: 3000
+        annotations:
+          endpoint.weight: 5
 
   gamma:
     - name: "gamma.svc"
