@@ -37,3 +37,27 @@ func parseInt64RangeWithFallback(val string, fallback1, fallback2 int64) (int64,
 	}
 	return num1, num2
 }
+
+// MakeEgressEndpoints makes the endpoints point to the ingress port
+func makeEgressEndpoints(in []Endpoint) (out []Endpoint) {
+	for _, ep := range in {
+		out = append(out, Endpoint{
+			Address:     ep.Address,
+			Annotations: ep.Annotations,
+			Port:        defaultIngressTrafficPort,
+		})
+	}
+	return out
+}
+
+// makeEgressClusters makes the endpoints point to the ingress port
+func makeEgressClusters(in []Cluster) (out []Cluster) {
+	for _, cluster := range in {
+		out = append(out, Cluster{
+			Name:        cluster.Name,
+			Annotations: cluster.Annotations,
+			Endpoints:   makeEgressEndpoints(cluster.Endpoints),
+		})
+	}
+	return out
+}

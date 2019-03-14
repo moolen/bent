@@ -8,11 +8,9 @@ import (
 	"github.com/moolen/bent/envoy/api/v2/core"
 	"github.com/moolen/bent/envoy/api/v2/endpoint"
 	"github.com/moolen/bent/envoy/api/v2/route"
-	log "github.com/sirupsen/logrus"
 )
 
 func getVirtualHost(dns, cluster string, annotations map[string]string) route.VirtualHost {
-	log.Infof("vhost annotations: %#v", annotations)
 	numRetries := parseIntWithFallback(annotations[AnnotationNumRetries], 3)
 
 	// should be the normal 99th percentile latency
@@ -22,6 +20,7 @@ func getVirtualHost(dns, cluster string, annotations map[string]string) route.Vi
 		Name: fmt.Sprintf("vhost_%s", dns),
 		Domains: []string{
 			dns,
+			fmt.Sprintf("%s:%d", dns, defaultIngressTrafficPort),
 		},
 		Routes: []route.Route{
 			{
@@ -61,13 +60,11 @@ func getVirtualHost(dns, cluster string, annotations map[string]string) route.Vi
 	return vhost
 }
 
-func createEnvoyEndpoint(cluster Cluster) []endpoint.LbEndpoint {
+func createEnvoyEndpoint(endpoints []Endpoint) []endpoint.LbEndpoint {
 	var envoyEndpoints []endpoint.LbEndpoint
 
-	for _, ep := range cluster.Endpoints {
+	for _, ep := range endpoints {
 		weight := parseIntWithFallback(ep.getAnnotation(AnnotaionEndpointWeight), 64)
-		log.Debugf("cluster %s / endpoint %s has weight: %d / annotations: %#v", cluster.Name, ep.Address, weight, ep.Annotations)
-
 		envoyEndpoints = append(envoyEndpoints, endpoint.LbEndpoint{
 			LoadBalancingWeight: &types.UInt32Value{Value: uint32(weight)},
 			Metadata:            &core.Metadata{},

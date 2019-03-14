@@ -1,5 +1,4 @@
 /vendor
-/deploy
 /deploy/.terraform
 /deploy/terraform.tfstate*
 /bin

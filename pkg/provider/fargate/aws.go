@@ -8,7 +8,7 @@ import (
 )
 
 func newSession() (*session.Session, error) {
-	return session.New(), nil
+	return session.NewSession()
 }
 
 func newSessionWithRole(role string) (*session.Session, error) {
@@ -25,11 +25,11 @@ func newSessionWithRole(role string) (*session.Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return session.New(&aws.Config{
+	return session.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentialsFromCreds(credentials.Value{
 			AccessKeyID:     *result.Credentials.AccessKeyId,
 			SecretAccessKey: *result.Credentials.SecretAccessKey,
 			SessionToken:    *result.Credentials.SessionToken,
 		}),
-	}), nil
+	})
 }

@@ -18,7 +18,7 @@ func (s Cluster) hasAnnotation(check string) bool {
 	return false
 }
 
-func (s Clusters) haveAnnotation(check string) bool {
+func (s Clusters) hasAnnotation(check string) bool {
 	for _, service := range s {
 		if service.hasAnnotation(check) {
 			return true

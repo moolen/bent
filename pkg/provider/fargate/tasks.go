@@ -60,9 +60,7 @@ func (p Provider) listTaskArns(cluster string) ([]*string, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, arn := range out.TaskArns {
-			tasks = append(tasks, arn)
-		}
+		tasks = append(tasks, out.TaskArns...)
 		arg.NextToken = out.NextToken
 		moreTasks = arg.NextToken != nil
 	}
@@ -84,13 +82,4 @@ func (p Provider) getTaskDefinitions(arns []string) (map[string]*ecs.TaskDefinit
 	}
 
 	return taskDefs, nil
-}
-
-func (p Provider) getTaskDefinition(arn string) (*ecs.TaskDefinition, error) {
-	arg := &ecs.DescribeTaskDefinitionInput{TaskDefinition: &arn}
-	out, err := p.Client.DescribeTaskDefinition(arg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load task instance data: %s", err.Error())
-	}
-	return out.TaskDefinition, err
 }

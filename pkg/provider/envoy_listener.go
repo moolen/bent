@@ -2,7 +2,6 @@ package provider
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gogo/protobuf/types"
@@ -16,8 +15,8 @@ import (
 	fault "github.com/moolen/bent/envoy/config/filter/http/fault/v2"
 	hcm "github.com/moolen/bent/envoy/config/filter/network/http_connection_manager/v2"
 	_type "github.com/moolen/bent/envoy/type"
-	"github.com/moolen/bent/pkg/cache"
 	"github.com/moolen/bent/pkg/util"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -47,68 +46,82 @@ var (
 	}
 )
 
-func makeListeners(node string, clusters Clusters) ([]cache.Resource, error) {
-	egressManager, err := makeHTTPManager(egressRoute, hcm.EGRESS, clusters)
+func makeListeners(annotations AnnotationProvider) ([]*v2.Listener, error) {
+	ingress, err := makeIngress(annotations)
 	if err != nil {
 		return nil, err
 	}
-	ingressManager, err := makeHTTPManager(ingressRoute, hcm.INGRESS, clusters)
+	egress, err := makeEgress(annotations)
 	if err != nil {
 		return nil, err
 	}
-
-	return []cache.Resource{
-		&v2.Listener{
-			Name: "egress-listener",
-			Address: core.Address{
-				Address: &core.Address_SocketAddress{
-					SocketAddress: &core.SocketAddress{
-						Protocol: core.TCP,
-						Address:  "0.0.0.0",
-						PortSpecifier: &core.SocketAddress_PortValue{
-							PortValue: defaultEgressTrafficPort,
-						},
-					},
-				},
-			},
-			FilterChains: []listener.FilterChain{{
-				Filters: []listener.Filter{
-					{
-						Name: util.HTTPConnectionManager,
-						ConfigType: &listener.Filter_TypedConfig{
-							TypedConfig: egressManager,
-						},
-					},
-				},
-			}},
-		},
-		&v2.Listener{
-			Name: "ingress-listener",
-			Address: core.Address{
-				Address: &core.Address_SocketAddress{
-					SocketAddress: &core.SocketAddress{
-						Protocol: core.TCP,
-						Address:  "0.0.0.0",
-						PortSpecifier: &core.SocketAddress_PortValue{
-							PortValue: defaultIngressTrafficPort,
-						},
-					},
-				},
-			},
-			FilterChains: []listener.FilterChain{{
-				Filters: []listener.Filter{
-					{
-						Name: util.HTTPConnectionManager,
-						ConfigType: &listener.Filter_TypedConfig{
-							TypedConfig: ingressManager,
-						},
-					}},
-			}},
-		},
+	return []*v2.Listener{
+		ingress, egress,
 	}, nil
 }
 
-func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tracing_OperationName, clusters Clusters) (*types.Any, error) {
+func makeIngress(annotations AnnotationProvider) (*v2.Listener, error) {
+	ingressManager, err := makeHTTPManager(ingressRoute, hcm.INGRESS, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return &v2.Listener{
+		Name: "ingress-listener",
+		Address: core.Address{
+			Address: &core.Address_SocketAddress{
+				SocketAddress: &core.SocketAddress{
+					Protocol: core.TCP,
+					Address:  "0.0.0.0",
+					PortSpecifier: &core.SocketAddress_PortValue{
+						PortValue: defaultIngressTrafficPort,
+					},
+				},
+			},
+		},
+		FilterChains: []listener.FilterChain{{
+			Filters: []listener.Filter{
+				{
+					Name: util.HTTPConnectionManager,
+					ConfigType: &listener.Filter_TypedConfig{
+						TypedConfig: util.MessageToAny(ingressManager),
+					},
+				}},
+		}},
+	}, nil
+}
+
+func makeEgress(annotations AnnotationProvider) (*v2.Listener, error) {
+	egressManager, err := makeHTTPManager(egressRoute, hcm.EGRESS, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return &v2.Listener{
+		Name: "egress-listener",
+		Address: core.Address{
+			Address: &core.Address_SocketAddress{
+				SocketAddress: &core.SocketAddress{
+					Protocol: core.TCP,
+					Address:  "0.0.0.0",
+					PortSpecifier: &core.SocketAddress_PortValue{
+						PortValue: defaultEgressTrafficPort,
+					},
+				},
+			},
+		},
+		FilterChains: []listener.FilterChain{{
+			Filters: []listener.Filter{
+				{
+					Name: util.HTTPConnectionManager,
+					ConfigType: &listener.Filter_TypedConfig{
+						TypedConfig: util.MessageToAny(egressManager),
+					},
+				},
+			},
+		}},
+	}, nil
+}
+
+func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tracing_OperationName, ap AnnotationProvider) (*hcm.HttpConnectionManager, error) {
 	var httpFilters []*hcm.HttpFilter
 
 	logConfig, err := util.MessageToStruct(&accesslog.FileAccessLog{
@@ -122,14 +135,14 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 	}
 
 	// add fault injection
-	if clusters.haveAnnotation(AnnotaionFaultInject) {
+	if ap != nil && ap.hasAnnotation(AnnotaionFaultInject) {
 		faultDuration := time.Millisecond * time.Duration(
-			parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultDelayDuration), 100))
-		delayPercent := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultDelayPercent), 1)
+			parseIntWithFallback(ap.getAnnotation(AnnotaionFaultDelayDuration), 100))
+		delayPercent := parseIntWithFallback(ap.getAnnotation(AnnotaionFaultDelayPercent), 1)
 		log.Printf("fault injection delay: %dms/%dpercent", faultDuration, delayPercent)
 
-		abortCode := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultAbortCode), 503)
-		abortPercent := parseIntWithFallback(clusters.getAnnotation(AnnotaionFaultAbortPercent), 1)
+		abortCode := parseIntWithFallback(ap.getAnnotation(AnnotaionFaultAbortCode), 503)
+		abortPercent := parseIntWithFallback(ap.getAnnotation(AnnotaionFaultAbortPercent), 1)
 		log.Printf("fault injection abort. code: %d / %dpercent", abortCode, abortPercent)
 
 		faultInjection := util.MessageToAny(&fault.HTTPFault{
@@ -161,7 +174,6 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 		})
 
 	}
-
 	// FIXME: we need to cache ingress health-checks
 	// healthCheckCacheDuration := time.Second * 90
 	// healthCheckConfig := util.MessageToAny(&hcv2.HealthCheck{
@@ -173,7 +185,7 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 		Name: util.Router,
 	})
 
-	return util.MessageToAny(&hcm.HttpConnectionManager{
+	return &hcm.HttpConnectionManager{
 		CodecType:  hcm.AUTO,
 		StatPrefix: fmt.Sprintf("%s_http", route),
 		// allow absolute urls to enable egress via HTTP_PROXY
@@ -211,5 +223,5 @@ func makeHTTPManager(route string, tracingOperation hcm.HttpConnectionManager_Tr
 			},
 		},
 		HttpFilters: httpFilters,
-	}), nil
+	}, nil
 }

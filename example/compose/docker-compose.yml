@@ -16,196 +16,147 @@ services:
     environment:
       COLLECTOR_ZIPKIN_HTTP_PORT: 9411
     ports:
-    - "16686:16686"
+      - "16686:16686"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.3
 
-  # alpha "pod"
-  alpha.envoy:
+  # ingress "pod"
+  ingress:
     image: moolen/bent-envoy:latest
     environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "alpha"
-      ENVOY_NODE_CLUSTER: "alpha"
+      ENVOY_NODE_ID: "ingress"
       ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
+      ENVOY_JAEGER_SERVICE_NAME: "ingress"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+    ports:
+      - "4100:4100"
+    networks:
+      vpcbr:
+        ipv4_address: 10.123.0.10
+
+  # alpha "pod"
+  alpha:
+    image: moolen/envoy-egress:latest
+    environment:
+      ENVOY_NODE_ID: "alpha"
+      ENVOY_JAEGER_SERVICE_NAME: "alpha"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      TARGET: http://beta.svc
+      TIMER: 1
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.20
-  alpha.egress:
-    image: moolen/http-egress:latest
+
+  # beta "pod"
+  beta:
+    image: moolen/envoy-fwd:latest
     environment:
-      TARGET: http://beta.svc
-      TIMER: 1
-      http_proxy: "http://alpha.envoy:4000"
+      ENVOY_NODE_ID: "beta"
+      ENVOY_JAEGER_SERVICE_NAME: "beta"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      TARGET: "http://gamma.svc/from/beta,http://zeta.svc/from/beta"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.21
 
   # beta "pod"
-  beta.envoy:
-    image: moolen/bent-envoy:latest
+  beta.2:
+    image: moolen/envoy-fwd:latest
     environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "beta"
-      ENVOY_NODE_CLUSTER: "beta"
+      ENVOY_NODE_ID: "beta.2"
+      ENVOY_JAEGER_SERVICE_NAME: "beta.2"
       ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      TARGET: "http://gamma.svc/from/beta,http://zeta.svc/from/beta"
+      SERVICE_NAME: "beta2-fwd"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.22
-  beta.fwd:
-    image: moolen/trace-fwd:latest
+
+  # gamma "pod"
+  gamma:
+    image: moolen/envoy-fwd:latest
     environment:
-      TARGET: "http://gamma.svc/from/beta,http://zeta.svc/from/beta"
-      SERVICE_NAME: "beta-fwd"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-      http_proxy: "http://beta.envoy:4000"
+      ENVOY_NODE_ID: "gamma"
+      ENVOY_JAEGER_SERVICE_NAME: "gamma"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      TARGET: "http://delta.svc/from/gamma,http://eta.svc/from/gamma,http://epsilon.svc/from/gamma"
+      SERVICE_NAME: "gamma-fwd"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.23
 
-  # beta "pod"
-  beta.2.envoy:
-    image: moolen/bent-envoy:latest
+  # delta "pod"
+  delta:
+    image: moolen/envoy-echo:latest
     environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "beta.2"
-      ENVOY_NODE_CLUSTER: "beta.2"
+      ENVOY_NODE_ID: "delta"
+      ENVOY_JAEGER_SERVICE_NAME: "delta"
       ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.122
-  beta.2.fwd:
-    image: moolen/trace-fwd:latest
-    environment:
-      TARGET: "http://gamma.svc/from/beta,http://zeta.svc/from/beta"
-      SERVICE_NAME: "beta2-fwd"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-      http_proxy: "http://beta.2.envoy:4000"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.123
-
-  # gamma "pod"
-  gamma.envoy:
-    image: moolen/bent-envoy:latest
-    environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "gamma"
-      ENVOY_NODE_CLUSTER: "gamma"
-      ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      PORT: "3000"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.24
-  gamma.fwd:
-    image: moolen/trace-fwd:latest
+
+  # epsilon "pod"
+  epsilon:
+    image: moolen/envoy-echo:latest
     environment:
-      TARGET: "http://delta.svc/from/gamma,http://eta.svc/from/gamma,http://epsilon.svc/from/gamma"
-      SERVICE_NAME: "gamma-fwd"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-      http_proxy: "http://gamma.envoy:4000"
+      ENVOY_NODE_ID: "epsilon"
+      ENVOY_JAEGER_SERVICE_NAME: "epsilon"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      PORT: "3000"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.25
 
-  # delta "pod"
-  delta.envoy:
-    image: moolen/bent-envoy:latest
+  # zeta "pod"
+  zeta:
+    image: moolen/envoy-echo:latest
     environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "delta"
-      ENVOY_NODE_CLUSTER: "delta"
+      ENVOY_NODE_ID: "zeta"
+      ENVOY_JAEGER_SERVICE_NAME: "zeta"
       ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      PORT: "3000"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.26
-  delta.echo:
-    image: jmalloc/echo-server
+
+  # eta "pod"
+  eta:
+    image: moolen/envoy-echo:latest
     environment:
+      ENVOY_NODE_ID: "eta"
+      ENVOY_JAEGER_SERVICE_NAME: "eta"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
       PORT: "3000"
-      http_proxy: "http://delta.envoy:4000"
+      http_proxy: "http://127.0.0.1:4000"
     networks:
       vpcbr:
         ipv4_address: 10.123.0.27
-
-  # epsilon "pod"
-  epsilon.envoy:
-    image: moolen/bent-envoy:latest
-    environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "epsilon"
-      ENVOY_NODE_CLUSTER: "epsilon"
-      ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.28
-  epsilon.echo:
-    image: jmalloc/echo-server
-    environment:
-      PORT: "3000"
-      http_proxy: "http://epsilon.envoy:4000"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.29
-
-  # zeta "pod"
-  zeta.envoy:
-    image: moolen/bent-envoy:latest
-    environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "zeta"
-      ENVOY_NODE_CLUSTER: "zeta"
-      ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.30
-  zeta.echo:
-    image: jmalloc/echo-server
-    environment:
-      PORT: "3000"
-      http_proxy: "http://zeta.envoy:4000"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.31
-
-  # eta "pod"
-  eta.envoy:
-    image: moolen/bent-envoy:latest
-    environment:
-      SKIP_META: 1
-      ENVOY_NODE_ID: "eta"
-      ENVOY_NODE_CLUSTER: "eta"
-      ENVOY_XDS_HOST: "controlplane"
-      JAEGER_AGENT_HOST: "jaeger"
-      JAEGER_AGENT_PORT: "6831"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.32
-  eta.echo:
-    image: jmalloc/echo-server
-    environment:
-      PORT: "3000"
-      http_proxy: "http://eta.envoy:4000"
-    networks:
-      vpcbr:
-        ipv4_address: 10.123.0.33
 
 networks:
   vpcbr:

@@ -1,13 +1,9 @@
 package provider
 
-// ServiceProvider provides a list of endpoints
-// - there are global endpoints for the egress traffic
-// - there are local endpoints for ingress traffic which are specific to a node
+// ServiceProvider abstracts the provider from the mesh implementation
 type ServiceProvider interface {
-	// GetClusters returns:
-	// - all global clusters
-	// - a mapping of node -> []cluster that contains local clusters
-	GetClusters() (global []Cluster, local map[string][]Cluster, err error)
+	// GetClusters provides a list of endpoints per node
+	GetClusters() (map[string][]Cluster, error)
 }
 
 // Cluster represents a group of endpoints
@@ -27,8 +23,11 @@ type Endpoint struct {
 	Port        uint32            `yaml:"port"`
 }
 
-// Annotaion allows a endpoint to specify additional routing configuration
-type Annotaion string
+// AnnotationProvider provides annotation values
+type AnnotationProvider interface {
+	hasAnnotation(string) bool
+	getAnnotation(string) string
+}
 
 const (
 	// AnnotationEnableRetry enables retry functionality

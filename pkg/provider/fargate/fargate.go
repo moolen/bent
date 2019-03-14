@@ -19,10 +19,6 @@ type Provider struct {
 	Client  *ecs.ECS
 }
 
-const (
-	maxDNSLength = 253
-)
-
 // NewProvider returns a new provider
 func NewProvider() (*Provider, error) {
 	session, err := newSession()
@@ -40,21 +36,22 @@ func NewProvider() (*Provider, error) {
 // assumptions:
 //   - we DON'T care about the FARGATE service concept
 //   - a container within a task can expose _multiple_ services
-func (p Provider) GetClusters() ([]provider.Cluster, map[string][]provider.Cluster, error) {
+func (p Provider) GetClusters() (map[string][]provider.Cluster, error) {
 	localClusters := make(map[string][]provider.Cluster)
-	serviceMap := make(map[string][]provider.Endpoint)
-
 	clusters, err := p.listClusters()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	for _, cluster := range clusters {
 		serviceTasks, err := p.listTasks(*cluster.ClusterArn)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		serviceTaskDefs, err := p.getTaskDefinitions(keys(serviceTasks))
+		if err != nil {
+			return nil, err
+		}
 		log.Debugf("cluster %s has tasks: %#v", *cluster.ClusterName, serviceTasks)
 
 		// get all endpoints per task
@@ -73,9 +70,10 @@ func (p Provider) GetClusters() ([]provider.Cluster, map[string][]provider.Clust
 					continue
 				}
 
-				for name, endpoints := range taskEndpoints {
-					serviceMap[name] = append(serviceMap[name], endpoints...)
+				// defaults: every task may launch a sidecar
+				localClusters[nodeID] = []provider.Cluster{}
 
+				for name, endpoints := range taskEndpoints {
 					localClusters[nodeID] = append(localClusters[nodeID], provider.Cluster{
 						Name:        name,
 						Annotations: sumEndpointAnnotations(endpoints),
@@ -85,20 +83,7 @@ func (p Provider) GetClusters() ([]provider.Cluster, map[string][]provider.Clust
 			}
 		}
 	}
-
-	// transform map to array
-	globalClusters := []provider.Cluster{}
-
-	for svc, eps := range serviceMap {
-
-		globalClusters = append(globalClusters, provider.Cluster{
-			Name:        svc,
-			Annotations: sumEndpointAnnotations(eps),
-			Endpoints:   eps,
-		})
-	}
-
-	return globalClusters, localClusters, nil
+	return localClusters, nil
 }
 
 // TaskArnToNodeID transforms a TaskArn to a node id
@@ -196,13 +181,4 @@ func stripKeyPrefix(prefix string, labels map[string]*string) map[string]string 
 	}
 
 	return annotations
-}
-
-func getTag(tags []*ecs.Tag, key, fallback string) string {
-	for _, tag := range tags {
-		if *tag.Key == key {
-			return *tag.Value
-		}
-	}
-	return fallback
 }

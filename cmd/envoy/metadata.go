@@ -19,15 +19,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"time"
+
+	"github.com/moolen/bent/pkg/provider/fargate"
 )
 
 const (
 	v2MetadataEndpoint     = "http://169.254.170.2/v2/metadata"
-	v2StatsEndpoint        = "http://169.254.170.2/v2/stats"
 	maxRetries             = 4
-	durationBetweenRetries = time.Second
+	durationBetweenRetries = time.Second * 2
 )
 
 // TaskResponse defines the schema for the task response JSON object
@@ -94,12 +94,6 @@ type Network struct {
 	IPv6Addresses []string `json:"IPv6Addresses,omitempty"`
 }
 
-// Node is the Envoy node ID for this sidecar
-type Node struct {
-	Name      string
-	Addresses []string
-}
-
 func main() {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -114,12 +108,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	parts := strings.Split(taskMetadata.TaskARN, "task/")
-	if len(parts) < 2 {
-		fmt.Printf("invalid arn: %s", taskMetadata.TaskARN)
+	nodeID, err := fargate.TaskArnToNodeID(taskMetadata.TaskARN)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "err")
 		os.Exit(1)
 	}
-	fmt.Println(parts[1])
+
+	// expose everything
+	fmt.Printf("%s", nodeID)
 
 	// node.Name = taskMetadata.Family
 	// containerID := ""
@@ -139,10 +135,6 @@ func main() {
 	// }
 
 	// fmt.Println(node.String())
-}
-
-func (n Node) String() string {
-	return fmt.Sprintf("%s.%s", n.Name, strings.Join(n.Addresses, "_"))
 }
 
 func taskMetadata(client *http.Client) (*TaskResponse, error) {
