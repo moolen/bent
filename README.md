@@ -12,8 +12,8 @@ For my own sanity aswell as my wallet, this thingy also runs locally leveraging 
 
 ## Installation
 
-WIP: provide a terraform setup to bootstrap the AWS infrastructure.
-For now, take a look at the [docker-compose](https://github.com/moolen/bent/blob/master/example/compose/docker-compose.yml) setup.
+There's a [terraform example](./deploy) to bootstrap the AWS infrastructure.
+You may also want to take a look at the [docker-compose](https://github.com/moolen/bent/blob/master/example/compose/docker-compose.yml) example.
 
 ### Building from source
 
@@ -38,6 +38,7 @@ A lot of features are built into this implementation:
 - configurable health checking
 - configurable circuit breaking
 - configurable retry mechanics
+- endpoint weights
 - json access logs
 - native open tracing integration (jaeger)
 - prometheus endpoint (`0.0.0.0:15090/stats/prometheus`)
