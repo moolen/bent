@@ -110,6 +110,7 @@ func GetResourceReferences(resources map[string]Resource) map[string]bool {
 					if typedConfig := filter.GetTypedConfig(); typedConfig != nil {
 						types.UnmarshalAny(typedConfig, config)
 					} else {
+						//lint:ignore SA1019 ignore deprecated for now
 						util.StructToMessage(filter.GetConfig(), config)
 					}
 

@@ -11,6 +11,7 @@ func newSession() (*session.Session, error) {
 	return session.NewSession()
 }
 
+//lint:ignore U1000 we will use it in future
 func newSessionWithRole(role string) (*session.Session, error) {
 	defaultSession, err := newSession()
 	if err != nil {

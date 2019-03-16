@@ -194,6 +194,7 @@ func TestConcurrentSetWatch(t *testing.T) {
 					if cancel != nil {
 						cancel()
 					}
+					//lint:ignore SA4006 ignore for now
 					_, cancel = c.CreateWatch(v2.DiscoveryRequest{
 						Node:    &core.Node{Id: id},
 						TypeUrl: cache.EndpointType,
