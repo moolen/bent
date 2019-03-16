@@ -55,7 +55,7 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		log.Printf("received respone from: %s", target)
+		log.Printf("received response from: %s", target)
 
 	}
 
