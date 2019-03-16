@@ -1,4 +1,5 @@
-# bent
+ Bent [![Go Report Card](https://goreportcard.com/badge/github.com/moolen/bent)](https://goreportcard.com/report/github.com/moolen/bent)
+ ====
 
 Run a Service Mesh on top of AWS Fargate containers.
 
@@ -132,7 +133,7 @@ Example schema of a ecs task-definition:
 
 ### File-based
 
-Specify a configuration in the following format and launch bent with `-provider file` and `-config path/to/config.yaml`. Bent will continuously read the file and change the envoy configuration.
+Specify a configuration in the following format and launch Bent with `-provider file` and `-config path/to/config.yaml`. Bent will continuously read the file and change the envoy configuration.
 
 ```yaml
 # services are a global collection of endpoints
