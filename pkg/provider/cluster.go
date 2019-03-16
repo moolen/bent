@@ -54,95 +54,69 @@ func (c Cluster) Config() ClusterConfig {
 
 // this func looks up values in the annotations of the cluster
 // it will pre-fill sane default values
-func parseClusterAnnotations(annotations map[string]string) ClusterConfig {
-	var cc ClusterConfig
+func parseClusterAnnotations(ann map[string]string) ClusterConfig {
+	lower, upper := parseInt64RangeWithFallback(
+		ann[AnnotationHealthExpectedStatus], 200, 400)
 
-	cc.HealthCheck.ExpectedStatusLower, cc.HealthCheck.ExpectedStatusUpper =
-		parseInt64RangeWithFallback(annotations[AnnotationHealthExpectedStatus], 200, 400)
-
-	cc.HealthCheck.Timeout = time.Millisecond * time.Duration(
-		parseIntWithFallback(annotations[AnnotationHealthTimeout], defaultHealthTimeout))
-
-	cc.HealthCheck.Interval = time.Millisecond * time.Duration(
-		parseIntWithFallback(annotations[AnnotationHealthInterval], defaultHealthInterval))
-
-	cc.HealthCheck.CacheDuration = time.Millisecond * time.Duration(
-		parseIntWithFallback(annotations[AnnotationHealthCacheDuration], defaultHealthCacheDuration))
-
-	cc.HealthCheck.Path = defaultHealthCheckPath
-	if _, ok := annotations[AnnotationHealthCheckPath]; ok {
-		cc.HealthCheck.Path = annotations[AnnotationHealthCheckPath]
-	}
-
-	if _, ok := annotations[AnnotationHealthPort]; ok {
-		checkPort := parseIntWithFallback(annotations[AnnotationHealthPort], -1)
-		if checkPort > 0 {
-			cc.HealthCheck.Port = uint32(checkPort)
-		}
-	}
-
-	// defaults
-	cc.CircuitBreaker.MaxConnections = 1000
-	cc.CircuitBreaker.MaxPendingRequests = 1000
-	cc.CircuitBreaker.MaxRequests = 1000
-	cc.CircuitBreaker.MaxRetries = 3
-
-	if _, ok := annotations[AnnotaionCBMaxConn]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionCBMaxConn], -1)
-		if num > 0 {
-			cc.CircuitBreaker.MaxConnections = uint32(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionCBMaxPending]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionCBMaxPending], -1)
-		if num > 0 {
-			cc.CircuitBreaker.MaxPendingRequests = uint32(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionCBMaxRequests]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionCBMaxRequests], -1)
-		if num > 0 {
-			cc.CircuitBreaker.MaxRequests = uint32(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionCBMaxRetries]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionCBMaxRetries], -1)
-		if num > 0 {
-			cc.CircuitBreaker.MaxRetries = uint32(num)
-
-		}
-	}
-
-	// fault
-	if _, ok := annotations[AnnotaionFaultInject]; ok {
-		cc.FaultConfig.Enabled = true
-		cc.FaultConfig.AbortCode = 503
-		cc.FaultConfig.DelayDuration = time.Millisecond * 30
-	}
-	if _, ok := annotations[AnnotaionFaultDelayPercent]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionFaultDelayPercent], -1)
-		if num > 0 {
-			cc.FaultConfig.DelayChance = uint32(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionFaultDelayDuration]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionFaultDelayDuration], -1)
-		if num > 0 {
-			cc.FaultConfig.DelayDuration = time.Millisecond * time.Duration(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionFaultAbortPercent]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionFaultAbortPercent], -1)
-		if num > 0 {
-			cc.FaultConfig.AbortChance = uint32(num)
-		}
-	}
-	if _, ok := annotations[AnnotaionFaultAbortCode]; ok {
-		num := parseIntWithFallback(annotations[AnnotaionFaultAbortCode], -1)
-		if num > 0 {
-			cc.FaultConfig.AbortCode = uint32(num)
-		}
+	cc := ClusterConfig{
+		FaultConfig: FaultConfig{
+			Enabled:       getBool(ann, AnnotaionFaultInject, false),
+			DelayChance:   getUInt32(ann, AnnotaionFaultDelayPercent, 0),
+			DelayDuration: getDurationMilliseconds(ann, AnnotaionFaultDelayDuration, 30),
+			AbortChance:   getUInt32(ann, AnnotaionFaultAbortPercent, 0),
+			AbortCode:     getUInt32(ann, AnnotaionFaultAbortCode, 503),
+		},
+		CircuitBreaker: ClusterCircuitBreakerConfig{
+			MaxConnections:     getUInt32(ann, AnnotaionCBMaxConn, 1000),
+			MaxPendingRequests: getUInt32(ann, AnnotaionCBMaxPending, 1000),
+			MaxRequests:        getUInt32(ann, AnnotaionCBMaxRequests, 1000),
+			MaxRetries:         getUInt32(ann, AnnotaionCBMaxRetries, 3),
+		},
+		HealthCheck: ClusterHealthCheckConfig{
+			Timeout:             getDurationMilliseconds(ann, AnnotationHealthTimeout, defaultHealthTimeout),
+			Interval:            getDurationMilliseconds(ann, AnnotationHealthInterval, defaultHealthInterval),
+			CacheDuration:       getDurationMilliseconds(ann, AnnotationHealthCacheDuration, defaultHealthCacheDuration),
+			Path:                getString(ann, AnnotationHealthCheckPath, defaultHealthCheckPath),
+			Port:                getUInt32(ann, AnnotationHealthPort, 0),
+			ExpectedStatusLower: lower,
+			ExpectedStatusUpper: upper,
+		},
 	}
 
 	return cc
+}
+
+func getUInt32(ann map[string]string, key string, fallback uint32) uint32 {
+	if _, ok := ann[key]; ok {
+		num := parseIntWithFallback(ann[key], -1)
+		if num > 0 {
+			return uint32(num)
+		}
+	}
+	return fallback
+}
+
+func getDurationMilliseconds(ann map[string]string, key string, fallback int) time.Duration {
+	if _, ok := ann[key]; ok {
+		num := parseIntWithFallback(ann[key], -1)
+		if num > 0 {
+			return time.Millisecond * time.Duration(num)
+		}
+	}
+	return time.Millisecond * time.Duration(fallback)
+}
+
+func getString(ann map[string]string, key string, fallback string) string {
+	if val, ok := ann[key]; ok {
+		return val
+	}
+	return fallback
+}
+
+// key set = true
+func getBool(ann map[string]string, key string, fallback bool) bool {
+	if _, ok := ann[key]; ok {
+		return true
+	}
+	return fallback
 }

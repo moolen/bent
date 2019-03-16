@@ -22,16 +22,13 @@ func (e Endpoint) Config() EndpointConfig {
 // this func looks up values in the annotations of the endpoint
 // it will pre-fill sane default values (weight must be: 0 < weight <= 128)
 func (e Endpoint) parseEndpointAnnotations() EndpointConfig {
-	var cc EndpointConfig
-
-	cc.Weight = 64
-	if _, ok := e.Annotations[AnnotaionEndpointWeight]; ok {
-		weight := uint32(parseIntWithFallback(e.Annotations[AnnotaionEndpointWeight], 64))
-		if weight > 0 && weight <= 128 {
-			cc.Weight = weight
-		} else {
-			log.Warnf("endpoint %s has invalid weight: %d", e.Address, weight)
-		}
+	weight := getUInt32(e.Annotations, AnnotaionEndpointWeight, 64)
+	if weight == 0 || weight > 128 {
+		weight = 64
+		log.Warnf("weight of endpoint %s has invalid weight", e.Address)
+	}
+	cc := EndpointConfig{
+		Weight: weight,
 	}
 
 	return cc
