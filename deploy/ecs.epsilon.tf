@@ -2,7 +2,7 @@ resource "aws_ecs_service" "epsilon" {
   name            = "epsilon"
   cluster         = "${aws_ecs_cluster.red.id}"
   task_definition = "${aws_ecs_task_definition.epsilon.arn}"
-  desired_count   = 1
+  desired_count   = 2
   launch_type     = "FARGATE"
 
   network_configuration = {
