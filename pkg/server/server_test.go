@@ -179,19 +179,19 @@ var (
 
 func makeResponses() map[string][]cache.Response {
 	return map[string][]cache.Response{
-		cache.EndpointType: []cache.Response{{
+		cache.EndpointType: {{
 			Version:   "1",
 			Resources: []cache.Resource{endpoint},
 		}},
-		cache.ClusterType: []cache.Response{{
+		cache.ClusterType: {{
 			Version:   "2",
 			Resources: []cache.Resource{cluster},
 		}},
-		cache.RouteType: []cache.Response{{
+		cache.RouteType: {{
 			Version:   "3",
 			Resources: []cache.Resource{route},
 		}},
-		cache.ListenerType: []cache.Response{{
+		cache.ListenerType: {{
 			Version:   "4",
 			Resources: []cache.Resource{listener},
 		}},

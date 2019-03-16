@@ -78,6 +78,7 @@ func TestListenerDefaults(t *testing.T) {
 	// modify listener: prepend fault
 	// [fault] -> [authz] -> [router]
 	l.InjectFault(FaultConfig{
+		Enabled:       true,
 		AbortChance:   10,
 		AbortCode:     418,
 		DelayChance:   20,

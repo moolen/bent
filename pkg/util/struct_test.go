@@ -35,10 +35,10 @@ func TestConversion(t *testing.T) {
 		t.Fatalf("unexpected error %v", err)
 	}
 	pbst := map[string]*types.Value{
-		"version_info": &types.Value{Kind: &types.Value_StringValue{StringValue: "test"}},
-		"node": &types.Value{Kind: &types.Value_StructValue{StructValue: &types.Struct{
+		"version_info": {Kind: &types.Value_StringValue{StringValue: "test"}},
+		"node": {Kind: &types.Value_StructValue{StructValue: &types.Struct{
 			Fields: map[string]*types.Value{
-				"id": &types.Value{Kind: &types.Value_StringValue{StringValue: "proxy"}},
+				"id": {Kind: &types.Value_StringValue{StringValue: "proxy"}},
 			},
 		}}},
 	}

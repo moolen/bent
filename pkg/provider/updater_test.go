@@ -20,7 +20,7 @@ func (t TestProvider) GetClusters() (map[string][]Cluster, error) {
 func TestTransform(t *testing.T) {
 
 	test := map[string][]Cluster{
-		"alpha.1": []Cluster{
+		"alpha.1": {
 			{
 				Name: "alpha.svc",
 				Endpoints: []Endpoint{
@@ -34,7 +34,7 @@ func TestTransform(t *testing.T) {
 				},
 			},
 		},
-		"alpha.2": []Cluster{
+		"alpha.2": {
 			{
 				Name: "alpha.svc",
 				Endpoints: []Endpoint{
@@ -45,7 +45,7 @@ func TestTransform(t *testing.T) {
 				},
 			},
 		},
-		"beta.1": []Cluster{
+		"beta.1": {
 			{
 				Name: "beta.svc",
 				Endpoints: []Endpoint{
@@ -56,7 +56,7 @@ func TestTransform(t *testing.T) {
 				},
 			},
 		},
-		"beta.2": []Cluster{
+		"beta.2": {
 			{
 				Name: "beta.svc",
 				Endpoints: []Endpoint{
@@ -70,8 +70,8 @@ func TestTransform(t *testing.T) {
 	}
 
 	expect := map[string]map[string][]Cluster{
-		"alpha.1": map[string][]Cluster{
-			"local": []Cluster{
+		"alpha.1": {
+			"local": {
 				{
 					Name: "local_alpha.svc",
 					Endpoints: []Endpoint{
@@ -85,7 +85,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			"global": []Cluster{
+			"global": {
 				{
 					Name: "alpha.svc",
 					Endpoints: []Endpoint{
@@ -114,8 +114,8 @@ func TestTransform(t *testing.T) {
 				},
 			},
 		},
-		"alpha.2": map[string][]Cluster{
-			"local": []Cluster{
+		"alpha.2": {
+			"local": {
 				{
 					Name: "local_alpha.svc",
 					Endpoints: []Endpoint{
@@ -126,7 +126,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			"global": []Cluster{
+			"global": {
 				{
 					Name: "alpha.svc",
 					Endpoints: []Endpoint{
@@ -155,8 +155,8 @@ func TestTransform(t *testing.T) {
 				},
 			},
 		},
-		"beta.1": map[string][]Cluster{
-			"local": []Cluster{
+		"beta.1": {
+			"local": {
 				{
 					Name: "local_beta.svc",
 					Endpoints: []Endpoint{
@@ -167,7 +167,7 @@ func TestTransform(t *testing.T) {
 					},
 				},
 			},
-			"global": []Cluster{
+			"global": {
 				{
 					Name: "alpha.svc",
 					Endpoints: []Endpoint{

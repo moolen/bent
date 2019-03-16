@@ -124,7 +124,7 @@ func createConnectionManager(cfg ListenerConfig) *hcm.HttpConnectionManager {
 			},
 		},
 		HttpFilters: []*hcm.HttpFilter{
-			&hcm.HttpFilter{
+			{
 				Name: util.Router,
 			},
 		},
@@ -166,7 +166,7 @@ func (l Listener) InjectFault(cfg FaultConfig) {
 	}
 
 	// prepend filter
-	l.hcm.HttpFilters = append([]*hcm.HttpFilter{&hcm.HttpFilter{
+	l.hcm.HttpFilters = append([]*hcm.HttpFilter{{
 		Name: util.Fault,
 		ConfigType: &hcm.HttpFilter_TypedConfig{
 			TypedConfig: util.MessageToAny(httpFault),
@@ -178,7 +178,7 @@ func (l Listener) InjectFault(cfg FaultConfig) {
 // order matters!
 func (l Listener) InjectAuthz(cfg AuthzConfig) {
 	timeout := time.Millisecond * 125
-	l.hcm.HttpFilters = append([]*hcm.HttpFilter{&hcm.HttpFilter{
+	l.hcm.HttpFilters = append([]*hcm.HttpFilter{{
 		Name: util.HTTPExternalAuthorization,
 		ConfigType: &hcm.HttpFilter_TypedConfig{
 			TypedConfig: util.MessageToAny(&authz.ExtAuthz{
@@ -204,7 +204,7 @@ func (l Listener) InjectAuthz(cfg AuthzConfig) {
 func (l Listener) InjectHealthCheckCache(cluster Cluster) {
 	cfg := cluster.Config()
 	//cacheTime := time.Second * 30
-	l.hcm.HttpFilters = append([]*hcm.HttpFilter{&hcm.HttpFilter{
+	l.hcm.HttpFilters = append([]*hcm.HttpFilter{{
 		Name: util.HealthCheck,
 		ConfigType: &hcm.HttpFilter_TypedConfig{
 			TypedConfig: util.MessageToAny(&hc.HealthCheck{
@@ -248,26 +248,26 @@ func (l Listener) Resource() *v2.Listener {
 var (
 	jsonLog = &google_protobuf.Struct{
 		Fields: map[string]*google_protobuf.Value{
-			"start_time":                &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%START_TIME%"}},
-			"method":                    &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(:METHOD)%"}},
-			"path":                      &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"}},
-			"protocol":                  &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%PROTOCOL%"}},
-			"response_code":             &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%RESPONSE_CODE%"}},
-			"response_flags":            &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%RESPONSE_FLAGS%"}},
-			"bytes_received":            &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%BYTES_RECEIVED%"}},
-			"bytes_sent":                &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%BYTES_SENT%"}},
-			"duration":                  &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%DURATION%"}},
-			"upstream_service_time":     &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"}},
-			"x_forwarded_for":           &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-FORWARDED-FOR)%"}},
-			"user_agent":                &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(USER-AGENT)%"}},
-			"request_id":                &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-REQUEST-ID)%"}},
-			"authority":                 &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(:AUTHORITY)%"}},
-			"upstream_host":             &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_HOST%"}},
-			"upstream_cluster":          &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_CLUSTER%"}},
-			"upstream_local_address":    &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_LOCAL_ADDRESS%"}},
-			"downstream_local_address":  &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%DOWNSTREAM_LOCAL_ADDRESS%"}},
-			"downstream_remote_address": &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%DOWNSTREAM_REMOTE_ADDRESS%"}},
-			"requested_server_name":     &google_protobuf.Value{Kind: &google_protobuf.Value_StringValue{StringValue: "%REQUESTED_SERVER_NAME%"}},
+			"start_time":                {Kind: &google_protobuf.Value_StringValue{StringValue: "%START_TIME%"}},
+			"method":                    {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(:METHOD)%"}},
+			"path":                      {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"}},
+			"protocol":                  {Kind: &google_protobuf.Value_StringValue{StringValue: "%PROTOCOL%"}},
+			"response_code":             {Kind: &google_protobuf.Value_StringValue{StringValue: "%RESPONSE_CODE%"}},
+			"response_flags":            {Kind: &google_protobuf.Value_StringValue{StringValue: "%RESPONSE_FLAGS%"}},
+			"bytes_received":            {Kind: &google_protobuf.Value_StringValue{StringValue: "%BYTES_RECEIVED%"}},
+			"bytes_sent":                {Kind: &google_protobuf.Value_StringValue{StringValue: "%BYTES_SENT%"}},
+			"duration":                  {Kind: &google_protobuf.Value_StringValue{StringValue: "%DURATION%"}},
+			"upstream_service_time":     {Kind: &google_protobuf.Value_StringValue{StringValue: "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"}},
+			"x_forwarded_for":           {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-FORWARDED-FOR)%"}},
+			"user_agent":                {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(USER-AGENT)%"}},
+			"request_id":                {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(X-REQUEST-ID)%"}},
+			"authority":                 {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQ(:AUTHORITY)%"}},
+			"upstream_host":             {Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_HOST%"}},
+			"upstream_cluster":          {Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_CLUSTER%"}},
+			"upstream_local_address":    {Kind: &google_protobuf.Value_StringValue{StringValue: "%UPSTREAM_LOCAL_ADDRESS%"}},
+			"downstream_local_address":  {Kind: &google_protobuf.Value_StringValue{StringValue: "%DOWNSTREAM_LOCAL_ADDRESS%"}},
+			"downstream_remote_address": {Kind: &google_protobuf.Value_StringValue{StringValue: "%DOWNSTREAM_REMOTE_ADDRESS%"}},
+			"requested_server_name":     {Kind: &google_protobuf.Value_StringValue{StringValue: "%REQUESTED_SERVER_NAME%"}},
 		},
 	}
 )

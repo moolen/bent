@@ -42,9 +42,9 @@ var (
 		[]cache.Resource{listener})
 
 	names = map[string][]string{
-		cache.EndpointType: []string{clusterName},
+		cache.EndpointType: {clusterName},
 		cache.ClusterType:  nil,
-		cache.RouteType:    []string{routeName},
+		cache.RouteType:    {routeName},
 		cache.ListenerType: nil,
 	}
 
