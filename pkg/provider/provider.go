@@ -6,29 +6,6 @@ type ServiceProvider interface {
 	GetClusters() (map[string][]Cluster, error)
 }
 
-// Cluster represents a group of endpoints
-type Cluster struct {
-	Name        string            `yaml:"name"`
-	Annotations map[string]string `yaml:"annotations"`
-	Endpoints   []Endpoint        `yaml:"endpoints"`
-}
-
-// Clusters is a list of services
-type Clusters []Cluster
-
-// Endpoint represents a address/port combination
-type Endpoint struct {
-	Address     string            `yaml:"address"`
-	Annotations map[string]string `yaml:"annotations"`
-	Port        uint32            `yaml:"port"`
-}
-
-// AnnotationProvider provides annotation values
-type AnnotationProvider interface {
-	hasAnnotation(string) bool
-	getAnnotation(string) string
-}
-
 const (
 
 	// ------
@@ -37,9 +14,11 @@ const (
 
 	// AnnotationHealthCheckPath specifies the HTTP Path for health-checks
 	AnnotationHealthCheckPath = "healthcheck.path"
-	// AnnotationHealthInterval specifies the health check interval in nanoseconds
+	// AnnotationHealthInterval specifies the health check interval in milliseconds
 	AnnotationHealthInterval = "healthcheck.interval"
-	// AnnotationHealthTimeout specifies the timeout of a health-check in nanoseconds
+	// AnnotationHealthCacheDuration specifies the health check cache duration in milliseconds
+	AnnotationHealthCacheDuration = "healthcheck.cache"
+	// AnnotationHealthTimeout specifies the timeout of a health-check in milliseconds
 	AnnotationHealthTimeout = "healthcheck.timeout"
 	// AnnotationHealthPort specifies the tcp port for the health-check
 	AnnotationHealthPort = "healthcheck.port"
@@ -61,11 +40,6 @@ const (
 	// endpoint level annotations
 	// ------
 
-	// AnnotationEnableRetry enables retry functionality
-	AnnotationEnableRetry = "enable-retry"
-	// AnnotationNumRetries controls the retry behavior of a route
-	AnnotationNumRetries = "num-retries"
-
 	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
 	AnnotaionEndpointWeight = "endpoint.weight"
 
@@ -83,7 +57,4 @@ const (
 	AnnotaionFaultAbortPercent = "fault.abort.percent"
 	// AnnotaionFaultAbortCode specify the response status code
 	AnnotaionFaultAbortCode = "fault.abort.code"
-
-	// TODO: add healthcheck filter
-	// https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/health_check_filter
 )

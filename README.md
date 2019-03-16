@@ -185,18 +185,20 @@ On Fargate, use dockerLabels to specify annotations. The annotations must follow
 If you want to specify the health-check path for your `echo.alpha` service, use this label: `envoy.service.echo.alpha.annotations.healthcheck.path: "/gimme-healthz"`
 
 
-Here's a list of all Annotations (some of them are untested tho!)
+Here's a list of all Annotations:
 
 ```go
-// ------
+	// ------
 	// cluster level annotations
 	// ------
 
 	// AnnotationHealthCheckPath specifies the HTTP Path for health-checks
 	AnnotationHealthCheckPath = "healthcheck.path"
-	// AnnotationHealthInterval specifies the health check interval in nanoseconds
+	// AnnotationHealthInterval specifies the health check interval in milliseconds
 	AnnotationHealthInterval = "healthcheck.interval"
-	// AnnotationHealthTimeout specifies the timeout of a health-check in nanoseconds
+	// AnnotationHealthCacheDuration specifies the health check cache duration in milliseconds
+	AnnotationHealthCacheDuration = "healthcheck.cache"
+	// AnnotationHealthTimeout specifies the timeout of a health-check in milliseconds
 	AnnotationHealthTimeout = "healthcheck.timeout"
 	// AnnotationHealthPort specifies the tcp port for the health-check
 	AnnotationHealthPort = "healthcheck.port"
@@ -217,11 +219,6 @@ Here's a list of all Annotations (some of them are untested tho!)
 	// ------
 	// endpoint level annotations
 	// ------
-
-	// AnnotationEnableRetry enables retry functionality
-	AnnotationEnableRetry = "enable-retry"
-	// AnnotationNumRetries controls the retry behavior of a route
-	AnnotationNumRetries = "num-retries"
 
 	// AnnotaionEndpointWeight specifies the loadbalancer weight of the endpoint
 	AnnotaionEndpointWeight = "endpoint.weight"

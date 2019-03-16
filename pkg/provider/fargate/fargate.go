@@ -75,9 +75,8 @@ func (p Provider) GetClusters() (map[string][]provider.Cluster, error) {
 
 				for name, endpoints := range taskEndpoints {
 					localClusters[nodeID] = append(localClusters[nodeID], provider.Cluster{
-						Name:        name,
-						Annotations: sumEndpointAnnotations(endpoints),
-						Endpoints:   endpoints,
+						Name:      name,
+						Endpoints: endpoints,
 					})
 				}
 			}
@@ -155,16 +154,6 @@ func findTaskTargets(task *ecs.TaskDefinition) (map[string][]taskTarget, error) 
 		}
 	}
 	return targets, nil
-}
-
-func sumEndpointAnnotations(eps []provider.Endpoint) map[string]string {
-	annotations := make(map[string]string)
-	for _, ep := range eps {
-		for k, v := range ep.Annotations {
-			annotations[k] = v
-		}
-	}
-	return annotations
 }
 
 // stripKeyPrefix removes the prefixes from all keys in the labels map

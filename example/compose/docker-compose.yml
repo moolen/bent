@@ -21,16 +21,34 @@ services:
       vpcbr:
         ipv4_address: 10.123.0.3
 
+  # authz "pod"
+  authz:
+    image: moolen/envoy-authz:latest
+    environment:
+      ENVOY_NODE_ID: "authz"
+      ENVOY_XDS_HOST: "controlplane"
+      ENVOY_JAEGER_SERVICE_NAME: "authz"
+      ENVOY_JAEGER_AGENT_HOST: "jaeger"
+      ENVOY_JAEGER_AGENT_PORT: "6831"
+      AUTH_USER: "jimmy"
+      AUTH_PASS: "1234"
+    networks:
+      vpcbr:
+        ipv4_address: 10.123.0.9
+
   # ingress "pod"
   ingress:
     image: moolen/bent-envoy:latest
     environment:
       ENVOY_NODE_ID: "ingress"
       ENVOY_XDS_HOST: "controlplane"
+      ENVOY_AUTHZ_ADDRESS: "authz"
+      ENVOY_AUTHZ_PORT: "8080"
       ENVOY_JAEGER_SERVICE_NAME: "ingress"
       ENVOY_JAEGER_AGENT_HOST: "jaeger"
       ENVOY_JAEGER_AGENT_PORT: "6831"
     ports:
+      - "9999:9999"
       - "4100:4100"
     networks:
       vpcbr:

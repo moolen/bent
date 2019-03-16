@@ -3,7 +3,6 @@ package provider
 import (
 	"strconv"
 	"strings"
-	"time"
 )
 
 func parseIntWithFallback(val string, fallback int) int {
@@ -12,14 +11,6 @@ func parseIntWithFallback(val string, fallback int) int {
 		return fallback
 	}
 	return num
-}
-
-func parseDurationWithFallback(val string, fallback time.Duration) time.Duration {
-	num, err := strconv.Atoi(val)
-	if err != nil {
-		return fallback
-	}
-	return time.Duration(num)
 }
 
 func parseInt64RangeWithFallback(val string, fallback1, fallback2 int64) (int64, int64) {
@@ -54,9 +45,8 @@ func makeEgressEndpoints(in []Endpoint) (out []Endpoint) {
 func makeEgressClusters(in []Cluster) (out []Cluster) {
 	for _, cluster := range in {
 		out = append(out, Cluster{
-			Name:        cluster.Name,
-			Annotations: cluster.Annotations,
-			Endpoints:   makeEgressEndpoints(cluster.Endpoints),
+			Name:      cluster.Name,
+			Endpoints: makeEgressEndpoints(cluster.Endpoints),
 		})
 	}
 	return out
@@ -64,20 +54,7 @@ func makeEgressClusters(in []Cluster) (out []Cluster) {
 
 func mergeAnnotations(cluster Cluster) map[string]string {
 	out := make(map[string]string)
-	for k, v := range cluster.Annotations {
-		out[k] = v
-	}
 	for _, ep := range cluster.Endpoints {
-		for k, v := range ep.Annotations {
-			out[k] = v
-		}
-	}
-	return out
-}
-
-func mergeEndpointAnnotations(eps ...Endpoint) map[string]string {
-	out := make(map[string]string)
-	for _, ep := range eps {
 		for k, v := range ep.Annotations {
 			out[k] = v
 		}

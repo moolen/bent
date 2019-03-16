@@ -1,0 +1,14 @@
+{
+    "name": "authz",
+    "version": "1.0.0",
+    "description": "",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "basic-auth": "^2.0.1",
+      "express": "^4.16.4"
+    }
+  }

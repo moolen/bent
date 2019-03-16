@@ -38,9 +38,11 @@
                   }]
                 }]
               },
-              "http_filters": {
-                "name": "envoy.router"
-              }
+              "http_filters": [
+                {
+                  "name": "envoy.router"
+                }
+              ]
             }
           }]
         }],
@@ -90,9 +92,24 @@
             "protocol": "TCP",
             "address": "127.0.0.1",
             "port_value": "{{envOrDefault "ENVOY_ADMIN_PORT" "9999"}}",
-        }
-      }],
-    }
+          }
+        }]
+      }
+      {{- if envOrDefault "ENVOY_AUTHZ_ADDRESS" "" }}
+      ,{
+        "name": "authz",
+        "type": "STRICT_DNS",
+        "connect_timeout": "0.25s",
+        "lb_policy": "ROUND_ROBIN",
+        "hosts": [{
+          "socket_address": {
+            "protocol": "TCP",
+            "address": "{{envOrDefault "ENVOY_AUTHZ_ADDRESS" ""}}",
+            "port_value": "{{envOrDefault "ENVOY_AUTHZ_PORT" "3000"}}",
+          }
+        }]
+      }
+      {{- end}}
     ]
   },
   "dynamic_resources": {

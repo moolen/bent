@@ -2,9 +2,7 @@ package provider
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
-	"time"
 
 	"github.com/moolen/bent/envoy/api/v2/core"
 	"github.com/moolen/bent/envoy/api/v2/endpoint"
@@ -25,13 +23,13 @@ func TestTransform(t *testing.T) {
 		"alpha.1": []Cluster{
 			{
 				Name: "alpha.svc",
-				Annotations: map[string]string{
-					AnnotationHealthInterval: "60000",
-				},
 				Endpoints: []Endpoint{
 					{
 						Address: "1.1.1.1",
 						Port:    1312,
+						Annotations: map[string]string{
+							AnnotationHealthInterval: "60000",
+						},
 					},
 				},
 			},
@@ -76,13 +74,13 @@ func TestTransform(t *testing.T) {
 			"local": []Cluster{
 				{
 					Name: "local_alpha.svc",
-					Annotations: map[string]string{
-						AnnotationHealthInterval: "60000",
-					},
 					Endpoints: []Endpoint{
 						{
 							Address: "1.1.1.1",
 							Port:    1312,
+							Annotations: map[string]string{
+								AnnotationHealthInterval: "60000",
+							},
 						},
 					},
 				},
@@ -218,7 +216,7 @@ func checkNode(test map[string][]Cluster, node *Node) error {
 		if err := checkCluster(node, cluster.Name, cluster.Endpoints); err != nil {
 			return err
 		}
-		if err := checkHealthAnnotation(node, cluster.Name, cluster.Annotations); err != nil {
+		if err := checkHealthAnnotation(node, cluster); err != nil {
 			return err
 		}
 	}
@@ -231,24 +229,19 @@ func checkNode(test map[string][]Cluster, node *Node) error {
 	return nil
 }
 
-func checkHealthAnnotation(node *Node, cluster string, annotations map[string]string) error {
-	check := node.clusters[cluster].HealthChecks[0]
+func checkHealthAnnotation(node *Node, cluster Cluster) error {
+	cfg := cluster.Config()
+	check := node.clusters[cluster.Name].HealthChecks[0]
 	checker := check.HealthChecker.(*core.HealthCheck_HttpHealthCheck_).HttpHealthCheck
-	path := annotations[AnnotationHealthCheckPath]
 
-	timeoutNum, _ := strconv.Atoi(annotations[AnnotationHealthTimeout])
-	timeout := time.Millisecond * time.Duration(timeoutNum)
-
-	intervalNum, _ := strconv.Atoi(annotations[AnnotationHealthInterval])
-	interval := time.Millisecond * time.Duration(intervalNum)
-	if path != "" && checker.Path != path {
-		return fmt.Errorf("cluster %s has wrong path: expected %s, got %s", cluster, path, checker.Path)
+	if cfg.HealthCheck.Path != "" && checker.Path != cfg.HealthCheck.Path {
+		return fmt.Errorf("cluster %s has wrong path: expected %s, got %s", cluster.Name, cfg.HealthCheck.Path, checker.Path)
 	}
-	if timeout != 0 && check.Timeout.Nanoseconds() != timeout.Nanoseconds() {
-		return fmt.Errorf("cluster %s has wrong timeout: expected %#v, got %#v", cluster, check.Timeout.Nanoseconds(), timeout.Nanoseconds())
+	if cfg.HealthCheck.Timeout != 0 && check.Timeout.Nanoseconds() != cfg.HealthCheck.Timeout.Nanoseconds() {
+		return fmt.Errorf("cluster %s has wrong timeout: expected %#v, got %#v", cluster.Name, check.Timeout.Nanoseconds(), cfg.HealthCheck.Timeout.Nanoseconds())
 	}
-	if interval != 0 && check.Interval.Nanoseconds() != interval.Nanoseconds() {
-		return fmt.Errorf("cluster %s has wrong interval: expected %#v, got %#v", cluster, check.Interval.Nanoseconds(), interval.Nanoseconds())
+	if cfg.HealthCheck.Interval != 0 && check.Interval.Nanoseconds() != cfg.HealthCheck.Interval.Nanoseconds() {
+		return fmt.Errorf("cluster %s has wrong interval: expected %#v, got %#v", cluster.Name, check.Interval.Nanoseconds(), cfg.HealthCheck.Interval.Nanoseconds())
 	}
 
 	return nil

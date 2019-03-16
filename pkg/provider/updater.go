@@ -10,15 +10,13 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/moolen/bent/envoy/api/v2/route"
+	hcm "github.com/moolen/bent/envoy/config/filter/network/http_connection_manager/v2"
 	"github.com/moolen/bent/pkg/cache"
 )
 
 const (
 	defaultEgressTrafficPort  = 4000
 	defaultIngressTrafficPort = 4100
-	defaultHealthCheckPath    = "/healthz"
-	defaultHealthTimeout      = 3000  // in ms
-	defaultHealthInterval     = 10000 // in ms
 
 	localClusterPrefix = "local"
 
@@ -54,45 +52,71 @@ func transform(providerClusters map[string][]Cluster) ([]*Node, error) {
 	for _, clusters := range providerClusters {
 		globalCluster = append(globalCluster, makeEgressClusters(clusters)...)
 		for _, cluster := range clusters {
-			globalVHosts = append(globalVHosts, getVirtualHost(cluster.Name, cluster.Name, mergeAnnotations(cluster)))
+			globalVHosts = append(globalVHosts, createEnvoyVHost(VHostConfig{
+				Hostname: cluster.Name,
+				Cluster:  cluster.Name,
+			}))
 		}
 	}
 
 	for node, clusters := range providerClusters {
 		node := NewNode(node)
+
 		// global
 		node.AddCluster(globalCluster...)
-		node.AddVirtualHosts(egressRoute, globalVHosts...)
+		node.AddRoute(egressRoute, globalVHosts...)
+
+		ingressListener := NewListener(ListenerConfig{
+			Address:          "0.0.0.0",
+			Port:             defaultIngressTrafficPort,
+			Name:             "default-ingress",
+			TargetRoute:      ingressRoute,
+			TracingOperation: hcm.INGRESS,
+		})
+		egressListener := NewListener(ListenerConfig{
+			Address:          "0.0.0.0",
+			Port:             defaultEgressTrafficPort,
+			Name:             "default-egress",
+			TargetRoute:      egressRoute,
+			TracingOperation: hcm.EGRESS,
+		})
+
+		// internal cluster & endpoints
 		for _, cluster := range clusters {
-			// internal
-			localClusterName := fmt.Sprintf("%s_%s",
-				localClusterPrefix, cluster.Name)
+			// local clusters have a prefix like this: local_beta.svc
+			localClusterName := fmt.Sprintf("%s_%s", localClusterPrefix, cluster.Name)
+
 			node.AddCluster(Cluster{
-				Name:        localClusterName,
-				Annotations: cluster.Annotations,
-				Endpoints:   cluster.Endpoints,
+				Name:      localClusterName,
+				Endpoints: cluster.Endpoints,
 			})
-			node.AddVirtualHosts(ingressRoute, getVirtualHost(cluster.Name, localClusterName, mergeAnnotations(cluster)))
+			node.AddRoute(ingressRoute, createEnvoyVHost(VHostConfig{
+				Hostname: cluster.Name,
+				Cluster:  localClusterName,
+			}))
+
+			ingressListener.InjectHealthCheckCache(cluster)
+			ingressListener.InjectFault(cluster.Config().FaultConfig)
 		}
 
-		listeners, err := makeListeners(Clusters(clusters))
-		if err != nil {
-			log.Errorf("error creating listeners: %s", err)
-			return nodes, err
-		}
-		node.AddListener(listeners...)
+		node.AddListener(ingressListener.Resource(), egressListener.Resource())
 		nodes = append(nodes, node)
 	}
 
 	// handle ingress
 	node := NewNode("ingress")
 	node.AddCluster(globalCluster...)
-	node.AddVirtualHosts(ingressRoute, globalVHosts...)
-	ingress, err := makeIngress(nil)
-	if err != nil {
-		return nil, err
-	}
-	node.AddListener(ingress)
+	node.AddRoute(ingressRoute, globalVHosts...)
+	ingressListener := NewListener(ListenerConfig{
+		Address:          "0.0.0.0",
+		Port:             defaultIngressTrafficPort,
+		TargetRoute:      ingressRoute,
+		TracingOperation: hcm.INGRESS,
+	})
+	ingressListener.InjectAuthz(AuthzConfig{
+		Cluster: "authz",
+	})
+	node.AddListener(ingressListener.Resource())
 	nodes = append(nodes, node)
 	return nodes, nil
 }
