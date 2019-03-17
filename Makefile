@@ -23,6 +23,7 @@ clean:
 	@rm -rf $(BINDIR)
 	@rm -rf envoy
 	@rm -rf vendor
+	go clean -cache
 
 .PHONY: test
 test: vendor envoy check

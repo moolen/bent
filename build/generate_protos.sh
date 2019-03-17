@@ -78,3 +78,5 @@ do
       --plugin=protoc-gen-validate=${root}/bin/validate --validate_out="lang=gogo:."
   fi
 done
+
+touch -m $root/envoy
