@@ -9,7 +9,7 @@ root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 xds=${root}/vendor/github.com/envoyproxy/data-plane-api
 
 echo "Expecting protoc version >= 3.5.0:"
-protoc=$(which protoc)
+protoc=$root/bin/protoc
 $protoc --version
 
 imports=(
@@ -78,3 +78,5 @@ do
       --plugin=protoc-gen-validate=${root}/bin/validate --validate_out="lang=gogo:."
   fi
 done
+
+touch -m $root/envoy

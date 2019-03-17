@@ -1,0 +1,26 @@
+language: go
+
+services:
+  - docker
+
+go:
+  - 1.11.x
+
+notifications:
+  email: false
+
+before_install:
+  - docker pull moolen/bent
+  - docker pull moolen/bent-envoy
+
+jobs:
+  include:
+    - stage: test
+      script: make tools test
+    - stage: build
+      script: make tools vendor tools docker
+    - stage: release
+      if: tag IS present
+      script:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - make tools vendor tools docker.release

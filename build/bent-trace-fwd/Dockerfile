@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/moolen/bent/
 ENV CGO_ENABLED 0
 ENV GOOS linux
 ENV GOARCH amd64
-RUN apk add --update make glide bash
+RUN apk add --update make glide bash git curl gcompat
 COPY . .
 RUN make build
 

@@ -1,4 +1,4 @@
- Bent [![Go Report Card](https://goreportcard.com/badge/github.com/moolen/bent)](https://goreportcard.com/report/github.com/moolen/bent)
+ Bent [![Go Report Card](https://goreportcard.com/badge/github.com/moolen/bent)](https://goreportcard.com/report/github.com/moolen/bent) [![Build Status](https://travis-ci.com/moolen/bent.svg?branch=master)](https://travis-ci.com/moolen/bent)
  ====
 
 Run a Service Mesh on top of AWS Fargate containers.
@@ -17,33 +17,35 @@ You may also want to take a look at the [docker-compose](https://github.com/mool
 ### Building from source
 
 ```bash
-$ make tools
-$ make depend.install
-$ make generate
-$ make check
+$ make test
 $ make build
-$ make docker
 ```
 
 ### Playground
 ```bash
-$ make docker
-$ docker-compose up -f ./example/compose/docker-compose.yml
+$ docker-compose up -f ./example/compose/docker-compose.yml -d
 ```
 Open the jaeger dashboard at [http://localhost:16686](http://localhost:16686) in your browser. There's a traffic-generator built-in.
+Just change the annotations in the `config.yaml`. They are reloaded at runtime.
+
+The front proxy is HTTP Basic auth protected
+
+```bash
+$ export http_proxy=http://localhost:4100 # points to front proxy
+$ curl beta.svc # 401
+$ curl jimmy:1234@beta.svc
+```
 
 A lot of features are built into this implementation:
 
 - configurable health checking
 - configurable circuit breaking
-- configurable retry mechanics
+- authz HTTP Basic Auth front-proxy
 - endpoint weights
 - json access logs
 - native open tracing integration (jaeger)
 - prometheus endpoint (`0.0.0.0:15090/stats/prometheus`)
 - configurable fault injection
-
-Just change the annotations in the `config.yaml`. They are reloaded at runtime.
 
 ## Concepts
 

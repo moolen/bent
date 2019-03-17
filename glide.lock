@@ -1,5 +1,5 @@
 hash: 7b9edc130234f01cd6c2d4641c72aedb10f9079033d96cdc06b6f0eaa8c12fdf
-updated: 2019-03-12T09:04:01.161412756+01:00
+updated: 2019-03-16T23:32:56.147794271+01:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: a61f2ea133dbbe587e8f7004417d1e5c6093f41a
@@ -144,4 +144,22 @@ imports:
   subpackages:
   - opencensus/proto/trace/v1
   - prometheus
-testImports: []
+testImports:
+- name: github.com/google/go-cmp
+  version: 6f77996f0c42f7b84e5a2b252227263f93432e9b
+  subpackages:
+  - cmp
+  - cmp/internal/diff
+  - cmp/internal/flags
+  - cmp/internal/function
+  - cmp/internal/value
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: gotest.tools
+  version: d1a6560d983a17c84a34edeb67898f2dc00bb646
+  subpackages:
+  - assert
+  - assert/cmp
+  - internal/difflib
+  - internal/format
+  - internal/source
