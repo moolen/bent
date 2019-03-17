@@ -141,3 +141,4 @@ $(BINDIR)/protoc: $(BINDIR)
 	unzip -o $(BINDIR)/protoc.zip -d $(BINDIR)/protoc.tmp
 	mv $(BINDIR)/protoc.tmp/bin/protoc $(BINDIR)/protoc
 	@rm -rf $(BINDIR)/protoc.tmp $(BINDIR)/protoc.zip
+	touch -m $(BINDIR)/protoc
