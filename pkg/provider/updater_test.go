@@ -259,22 +259,29 @@ func checkCluster(node *Node, name string, eps []Endpoint) error {
 		return fmt.Errorf("wrong number of endpoints for cluster %s. expecting %d, found: %d ", name, len(node.endpoints[name].Endpoints[0].LbEndpoints), len(eps))
 	}
 
-	for i, ep := range eps {
-		if _, ok := node.endpoints[name]; !ok {
-			return fmt.Errorf("missing endpoint with key %s, found: %#v name", name, node.endpoints)
-		}
-		if node.endpoints[name].ClusterName != name {
-			return fmt.Errorf("wrong cluster name! expecting %s, found: %s ", name, node.endpoints[name].ClusterName)
-		}
-		if node.endpoints[name].ClusterName != name {
-			return fmt.Errorf("wrong cluster name! expecting %s, found: %s ", name, node.endpoints[name].ClusterName)
-		}
+	if _, ok := node.endpoints[name]; !ok {
+		return fmt.Errorf("missing endpoint with key %s, found: %#v name", name, node.endpoints)
+	}
+	if node.endpoints[name].ClusterName != name {
+		return fmt.Errorf("wrong cluster name! expecting %s, found: %s ", name, node.endpoints[name].ClusterName)
+	}
+	if node.endpoints[name].ClusterName != name {
+		return fmt.Errorf("wrong cluster name! expecting %s, found: %s ", name, node.endpoints[name].ClusterName)
+	}
 
-		if !hasAddress(node.endpoints[name].Endpoints[0].LbEndpoints[i], ep.Address) {
-			return fmt.Errorf("endpoint has wrong address. expected %s found: %#v ", ep.Address, getAddress(node.endpoints[name].Endpoints[0].LbEndpoints[i]))
+	for _, ep := range eps {
+		found := false
+		for _, lbEndpoint := range node.endpoints[name].Endpoints[0].LbEndpoints {
+
+			epAddr := getAddress(lbEndpoint)
+			epPort := getPort(lbEndpoint)
+
+			if epAddr == ep.Address && epPort == ep.Port {
+				found = true
+			}
 		}
-		if !hasPort(node.endpoints[name].Endpoints[0].LbEndpoints[i], ep.Port) {
-			return fmt.Errorf("endpoint has wrong port. expected %d, found: %d ", ep.Port, getPort(node.endpoints[name].Endpoints[0].LbEndpoints[i]))
+		if found == false {
+			return fmt.Errorf("Endpoint was not found: %#v", ep)
 		}
 	}
 	return nil
@@ -286,12 +293,4 @@ func getAddress(ep endpoint.LbEndpoint) string {
 
 func getPort(ep endpoint.LbEndpoint) uint32 {
 	return ep.HostIdentifier.(*endpoint.LbEndpoint_Endpoint).Endpoint.Address.Address.(*core.Address_SocketAddress).SocketAddress.PortSpecifier.(*core.SocketAddress_PortValue).PortValue
-}
-
-func hasAddress(ep endpoint.LbEndpoint, addr string) bool {
-	return addr == getAddress(ep)
-}
-
-func hasPort(ep endpoint.LbEndpoint, port uint32) bool {
-	return port == getPort(ep)
 }
