@@ -22,6 +22,9 @@ $ make build
 ```
 
 ### Playground
+
+![DAG](./example/compose/dag.png)
+
 ```bash
 $ docker-compose up -f ./example/compose/docker-compose.yml -d
 ```
@@ -31,7 +34,7 @@ Just change the annotations in the `config.yaml`. They are reloaded at runtime.
 The front proxy is HTTP Basic auth protected
 
 ```bash
-$ export http_proxy=http://localhost:4100 # points to front proxy
+$ export http_proxy=http://localhost:4100 # points to "ingress"
 $ curl beta.svc # 401
 $ curl jimmy:1234@beta.svc
 ```
